@@ -1,6 +1,6 @@
 # CHANGELOG
 
-Maintenance release: updates the shared menu and support code. Fixes a black screen on **DVI-only monitors**, and stops **clone Pico boards** crashing at start-up. The emulator itself is unchanged.
+Adds support for **Sega SG-1000** games.
 
 # General Info
 
@@ -8,6 +8,14 @@ Maintenance release: updates the shared menu and support code. Fixes a black scr
 [Binaries for each configuration and PCB design are at the end of this page](#downloads___).
 
 For board-by-board wiring, supported display modes and more refer to the [pico-infonesPlus documentation](https://github.com/fhoedemakers/pico-infonesPlus#setup). The set of supported boards and their pinouts is identical between the two projects.
+
+# v0.29 Release notes
+
+## What's new
+
+- **Sega SG-1000 games.** Roms with the `.sg` extension can now be played. Copy them to the SD card next to your Master System and Game Gear roms. Save states work as usual.
+- The extension must be lowercase: rename files ending in `.SG` to `.sg`.
+- SC-3000 (`.sc`) and SF-7000 (`.sf`) software is not supported.
 
 # v0.28 Release notes
 

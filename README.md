@@ -1,10 +1,10 @@
 
-# pico-smsplus, A Sega Master System and Game Gear emulator for RP2040/RP2350 based boards.
+# pico-smsplus, A Sega Master System, Game Gear and SG-1000 emulator for RP2040/RP2350 based boards.
 
-This software is a port of [SmsPlus](https://segaretro.org/SMS_Plus), a Sega Master System and Game Gear emulator for RP2040/RP2350 based microcontroller boards like the RaspberryPi Pico and Pico 2. Sound and video are ouput over HDMI.
+This software is a port of [SmsPlus](https://segaretro.org/SMS_Plus), a Sega Master System and Game Gear emulator for RP2040/RP2350 based microcontroller boards like the RaspberryPi Pico and Pico 2. Sound and video are ouput over HDMI. Support for the Sega SG-1000 has been added to this port; see [SG-1000 support](#sg-1000-support).
 The code for HDMI output is based on [Shuichi Takano's Pico-InfoNes project](https://github.com/shuichitakano/pico-infones) which in turn is based on [PicoDVI](https://github.com/Wren6991/PicoDVI).
 
-Create a FAT32 (recommended. see [#29](https://github.com/fhoedemakers/pico-smsplus/issues/29)) or exFAT formatted SD card and copy your Master System (.sms) and/or Game Gear (.gg) roms and optional [metadata](#using-metadata) on to it.
+Create a FAT32 (recommended. see [#29](https://github.com/fhoedemakers/pico-smsplus/issues/29)) or exFAT formatted SD card and copy your Master System (.sms), Game Gear (.gg) and/or SG-1000 (.sg) roms and optional [metadata](#using-metadata) on to it.
 You can organize the roms in directories. A menu is displayed on which you can select the rom to play. The last 20 games you started are kept in a [recently played list](#recently-played-games), one button press away in the menu.
 
 Supports two controllers for two player Master System games. [See "about two player games" below for specifics and limitations](#about-two-player-games) 
@@ -29,6 +29,17 @@ Click on image below to see a demo video.
 
 >[!WARNING] 
 > On Pico/RP2040, some games show red flashing between screens. This can be occasionally or severe depending on the game. If you are sensitive for this, or experience health issues while playing those games, please stop playing immediately.
+
+***
+
+## SG-1000 Support
+
+Sega SG-1000 cartridge images with the `.sg` file extension can be played. The extension must be written in lowercase: files ending in `.SG` are listed in the menu, but are started as Master System roms and must be renamed first.
+
+- The RAM expansion used by several Taiwanese releases (for example Knightmare and TwinBee) and the extra cartridge RAM of titles such as The Castle are detected automatically.
+- Save states are supported. SG-1000 cartridges have no battery-backed saves.
+- The SG-1000 has a fixed palette and no FM sound; the YM2413 FM setting has no effect for these games.
+- SC-3000 (`.sc`) and SF-7000 (`.sf`) software is not supported.
 
 ***
 
@@ -80,7 +91,7 @@ On every other configuration — all RP2040 boards, and the RP2350 boards that u
 
 The binary specific for your config can be downloaded from the [releases](https://github.com/fhoedemakers/pico-smsplus/releases/latest) page.
 
-You need a FAT32 or exFAT formatted SD card to put your .sms and .gg roms on, preferably in /roms/SMS (subdirectory organization is supported). It is highly recommended to use FAT32, see https://github.com/fhoedemakers/pico-smsplus/issues/29
+You need a FAT32 or exFAT formatted SD card to put your .sms, .gg and .sg roms on, preferably in /roms/SMS (subdirectory organization is supported). It is highly recommended to use FAT32, see https://github.com/fhoedemakers/pico-smsplus/issues/29
 
 >[!NOTE]
 > For detailed instructions how to setup specific configurations, see the [Pico-InfonesPlus sister project](https://github.com/fhoedemakers/pico-infonesPlus).

@@ -95,10 +95,12 @@ typedef struct
 
 //     return 1;
 // }
-int load_rom(uintptr_t addr,   int size, bool isGameGear)
+int load_rom(uintptr_t addr, int size, int cartType)
 {
     uint8_t *start = (uint8_t *)addr;
-     if ((size / 512) & 1)
+    /* SG-1000 images have no copier header, and sizes such as 49136 or
+       65535 bytes would wrongly trigger the strip below. */
+    if (cartType != TYPE_SG && ((size / 512) & 1))
     {
         size -= 512;
         start += 512;
@@ -112,8 +114,11 @@ int load_rom(uintptr_t addr,   int size, bool isGameGear)
     bitmap.pitch = BMP_WIDTH;
     bitmap.depth = 8;
     cart.rom = start;
-    cart.pages = (size / 0x4000);
-    cart.type = isGameGear ? TYPE_GG : TYPE_SMS;
+    cart.size = size;
+    cart.type = cartType;
+    /* SG ROMs can be 8 KB or not a multiple of 16 KB: round up so the
+       mapper modulo never sees zero pages and the last partial page counts. */
+    cart.pages = (cartType == TYPE_SG) ? ((size + 0x3FFF) >> 14) : (size / 0x4000);
     return 1;
 }
 

@@ -34,7 +34,7 @@ char *romName;
 bool showSettings = false;
 bool loadSaveStateMenu = false;
 SaveStateTypes quickSaveAction = SaveStateTypes::NONE;
-static bool isGameGear = false;
+static int cartType = TYPE_SMS; // TYPE_SMS, TYPE_GG or TYPE_SG
 static uint32_t start_tick_us = 0;
 static uint32_t fps = 0;
 static uint8_t framesbeforeAutoStateIsLoaded = 0;
@@ -509,6 +509,29 @@ extern "C" void in_ram(sms_palette_sync)(int index)
     return;
 }
 
+// SG-1000: fixed TMS9918A palette, set once at reset.
+// The TMS palette uses channel values up to 255, so scale by 15 (31) rather than
+// 16 (32): the conversion used for SMS/GG above overflows for values >= 249
+// (>= 253 for 555) and would turn white into near black.
+extern "C" void sms_palette_syncSG(int index)
+{
+    const uint8 *rgb = tms_palette_rgb[index & 15];
+    int r = rgb[0];
+    int g = rgb[1];
+    int b = rgb[2];
+#if !HSTX
+    int r444 = ((r << 4) - r + 127) >> 8; // (r888 * 15 + 127) / 256, max 15
+    int g444 = ((g << 4) - g + 127) >> 8;
+    int b444 = ((b << 4) - b + 127) >> 8;
+    palette444[index] = (r444 << 8) | (g444 << 4) | b444;
+#else
+    int r555 = ((r << 5) - r + 127) >> 8; // (r888 * 31 + 127) / 256, max 31
+    int g555 = ((g << 5) - g + 127) >> 8;
+    int b555 = ((b << 5) - b + 127) >> 8;
+    palette444[index] = (r555 << 10) | (g555 << 5) | b555;
+#endif
+}
+
 extern "C" void in_ram(sms_render_line)(int line, const uint8_t *buffer)
 {
     // DVI top margin has #MARGINTOP lines
@@ -698,7 +721,8 @@ void system_save_sram()
     printf("system_save_sram: Saving SRAM\n");
     strcpy(fileName, Frens::GetfileNameFromFullPath(romName));
     Frens::stripextensionfromfilename(fileName);
-    if (!sms.save)
+    // SG-1000 carts have no battery RAM; sms.sram is smaller working RAM there
+    if (!sms.save || IS_SG)
     {
         printf("SRAM not updated.\n");
         return;
@@ -737,7 +761,7 @@ void loadoverlay()
     static char PATH[FF_MAX_LFN + 1];
     static char CHOSEN[FF_MAX_LFN + 1];
     // only Game Gear has default overlay
-    char *overlay = isGameGear ?
+    char *overlay = (cartType == TYPE_GG) ?
 #if !HSTX
                                (char *)EmuOverlay_444
                                :
@@ -1163,7 +1187,7 @@ int main()
     ErrorMessage[0] = selectedRom[0] = 0;
 
     int fileSize = 0;
-    isGameGear = false;
+    cartType = TYPE_SMS;
 
     vreg_voltage voltage = VREG_VOLTAGE_1_20;
 #if HSTX
@@ -1210,20 +1234,36 @@ int main()
         #if 1
         if (strlen(selectedRom) == 0 || reset == true )
         {
-            menu("Pico-SMS+", ErrorMessage, isFatalError, showSplash, ".sms .gg", selectedRom);
+            menu("Pico-SMS+", ErrorMessage, isFatalError, showSplash, ".sms .gg .sg", selectedRom);
             // returns only when PSRAM is enabled,
             printf("Selected rom from menu: %s\n", selectedRom);
         }
         #endif
         reset = false;
         fileSize = 0;
-        isGameGear = false;
+        cartType = TYPE_SMS;
         //EXT_AUDIO_MUTE_INTERNAL_SPEAKER(settings.flags.fruitJamEnableInternalSpeaker == 0);
         if (Frens::isPsramEnabled())
         {
-            // Detect rom type from memory
-            // This is used to determine the rom size and type (SMS or GG)
-            detect_rom_type_from_memory(ROM_FILE_ADDR, &fileSize, &isGameGear);
+            if (Frens::cstr_endswith(selectedRom, ".sg"))
+            {
+                // SG-1000 roms have no "TMR SEGA" header to take the size from.
+                // In PSRAM mode selectedRom holds the full path of the loaded rom.
+                FILINFO fno;
+                cartType = TYPE_SG;
+                if (f_stat(selectedRom, &fno) == FR_OK)
+                {
+                    fileSize = fno.fsize;
+                }
+            }
+            else
+            {
+                // Detect rom type from memory
+                // This is used to determine the rom size and type (SMS or GG)
+                bool isGameGear = false;
+                detect_rom_type_from_memory(ROM_FILE_ADDR, &fileSize, &isGameGear);
+                cartType = isGameGear ? TYPE_GG : TYPE_SMS;
+            }
             if (fileSize == 0)
             {
                 // No rom loaded, continue to menu
@@ -1246,12 +1286,23 @@ int main()
             }
             fileSize = f_size(&file);
             f_close(&file);
-            isGameGear = Frens::cstr_endswith(selectedRom, ".gg");
+            if (Frens::cstr_endswith(selectedRom, ".gg"))
+            {
+                cartType = TYPE_GG;
+            }
+            else if (Frens::cstr_endswith(selectedRom, ".sg"))
+            {
+                cartType = TYPE_SG;
+            }
             printf("Now playing: %s (%d bytes)\n", selectedRom, fileSize);
         }
-        if (isGameGear)
+        if (cartType == TYPE_GG)
         {
             printf("Game Gear rom detected\n");
+        }
+        else if (cartType == TYPE_SG)
+        {
+            printf("SG-1000 rom detected\n");
         }
         else
         {
@@ -1282,7 +1333,7 @@ int main()
         do {
             reset = resetGame = false;
           
-            load_rom(ROM_FILE_ADDR, fileSize, isGameGear); 
+            load_rom(ROM_FILE_ADDR, fileSize, cartType);
             // Initialize all systems and power on
             system_init(SMS_AUD_RATE);
             // load state if any

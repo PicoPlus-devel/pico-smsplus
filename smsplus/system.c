@@ -50,19 +50,19 @@ void frens_f_free(void *ptr);
 void ym2413_write(int chip, int offset, int data);
 void system_init(int rate) {
 
-    // initialize memory
-    cachePtr = (int16 *)frens_f_malloc(512 * 4 * sizeof(int16));
-    cacheStore = (uint8 *)frens_f_malloc(CACHEDTILES * 64 * sizeof(uint8));
-    cacheStoreUsed = (uint8 *)frens_f_malloc(CACHEDTILES * sizeof(uint8));
-    sms.ram  = (uint8 *)frens_f_malloc(RAMSIZEBYTES);
-    sms.sram = (uint8 *)frens_f_malloc(SRAMSIZEBYTES);
-    if (!cachePtr || !cacheStore || !cacheStoreUsed || !sms.ram || !sms.sram) {
-        printf("Failed to allocate memory for cache\n");
-        exit(1);
+    // initialize memory. cart.type is already set by load_rom().
+    // The SG-1000 renderer does not use the Mode 4 tile cache, and its
+    // cartridge RAM is 8 KB instead of the 32 KB SMS battery RAM.
+    if (!IS_SG) {
+        cachePtr = (int16 *)frens_f_malloc(512 * 4 * sizeof(int16));
+        cacheStore = (uint8 *)frens_f_malloc(CACHEDTILES * 64 * sizeof(uint8));
+        cacheStoreUsed = (uint8 *)frens_f_malloc(CACHEDTILES * sizeof(uint8));
+        memset(cachePtr, 0, 512 * 4 * sizeof(int16));
+        memset(cacheStore, 0, CACHEDTILES * 64 * sizeof(uint8));
+        memset(cacheStoreUsed, 0, CACHEDTILES * sizeof(uint8));
     }
-    memset(cachePtr, 0, 512 * 4 * sizeof(int16));
-    memset(cacheStore, 0, CACHEDTILES * 64 * sizeof(uint8));
-    memset(cacheStoreUsed, 0, CACHEDTILES * sizeof(uint8));
+    sms.ram  = (uint8 *)frens_f_malloc(RAMSIZEBYTES);
+    sms.sram = (uint8 *)frens_f_malloc(SRAM_BYTES);
     /* Initialize the VDP emulation */
     vdp_init();
 
@@ -163,7 +163,7 @@ void system_reset(void) {
     vdp_reset();
     sms_reset();
     render_reset();
-    system_load_sram();
+    if (!IS_SG) system_load_sram();
     if (snd.enabled) {
 #if PICO_RP2350
         if (opll) {
@@ -204,10 +204,10 @@ bool system_save_state(FIL *fd) {
         return false;
     }
 
-    /* Save SMS SRAM contents */
-    fr = f_write(fd, sms.sram, SRAMSIZEBYTES, &bw);
-    if (fr != FR_OK || bw != SRAMSIZEBYTES) {
-        printf("Error writing SMS SRAM: fr=%d wrote=%u expected=%u\n", fr, bw, (unsigned)SRAMSIZEBYTES);
+    /* Save SMS SRAM contents (SG-1000: the smaller cartridge RAM) */
+    fr = f_write(fd, sms.sram, SRAM_BYTES, &bw);
+    if (fr != FR_OK || bw != SRAM_BYTES) {
+        printf("Error writing SMS SRAM: fr=%d wrote=%u expected=%u\n", fr, bw, (unsigned)SRAM_BYTES);
         return false;
     }
 
@@ -287,10 +287,10 @@ bool system_load_state(FIL *fd) {
         return false;
     }
 
-    /* Load SMS SRAM contents */
-    fr = f_read(fd, sms.sram, SRAMSIZEBYTES, &br);
-    if (fr != FR_OK || br != SRAMSIZEBYTES) {
-        printf("Error reading SMS SRAM: fr=%d read=%u expected=%u\n", fr, br, (unsigned)SRAMSIZEBYTES);
+    /* Load SMS SRAM contents (SG-1000: the smaller cartridge RAM) */
+    fr = f_read(fd, sms.sram, SRAM_BYTES, &br);
+    if (fr != FR_OK || br != SRAM_BYTES) {
+        printf("Error reading SMS SRAM: fr=%d read=%u expected=%u\n", fr, br, (unsigned)SRAM_BYTES);
         return false;
     }
 
@@ -324,28 +324,33 @@ bool system_load_state(FIL *fd) {
     /* Restore callbacks */
     z80_set_irq_callback(sms_irq_callback);
 
-    cpu_readmap[0] = cart.rom + 0x0000; /* 0000-3FFF */
-    cpu_readmap[1] = cart.rom + 0x2000;
-    cpu_readmap[2] = cart.rom + 0x4000; /* 4000-7FFF */
-    cpu_readmap[3] = cart.rom + 0x6000;
-    cpu_readmap[4] = cart.rom + 0x0000; /* 0000-3FFF */
-    cpu_readmap[5] = cart.rom + 0x2000;
-    cpu_readmap[6] = sms.ram;
-    cpu_readmap[7] = sms.ram;
+    if (IS_SG) {
+        /* Rebuilds ROM/RAM pages, detected RAM adaptor and mapper paging */
+        sg_memory_map();
+    } else {
+        cpu_readmap[0] = cart.rom + 0x0000; /* 0000-3FFF */
+        cpu_readmap[1] = cart.rom + 0x2000;
+        cpu_readmap[2] = cart.rom + 0x4000; /* 4000-7FFF */
+        cpu_readmap[3] = cart.rom + 0x6000;
+        cpu_readmap[4] = cart.rom + 0x0000; /* 0000-3FFF */
+        cpu_readmap[5] = cart.rom + 0x2000;
+        cpu_readmap[6] = sms.ram;
+        cpu_readmap[7] = sms.ram;
 
-    cpu_writemap[0] = sms.dummy;
-    cpu_writemap[1] = sms.dummy;
-    cpu_writemap[2] = sms.dummy;
-    cpu_writemap[3] = sms.dummy;
-    cpu_writemap[4] = sms.dummy;
-    cpu_writemap[5] = sms.dummy;
-    cpu_writemap[6] = sms.ram;
-    cpu_writemap[7] = sms.ram;
+        cpu_writemap[0] = sms.dummy;
+        cpu_writemap[1] = sms.dummy;
+        cpu_writemap[2] = sms.dummy;
+        cpu_writemap[3] = sms.dummy;
+        cpu_writemap[4] = sms.dummy;
+        cpu_writemap[5] = sms.dummy;
+        cpu_writemap[6] = sms.ram;
+        cpu_writemap[7] = sms.ram;
 
-    sms_mapper_w(3, sms.fcr[3]);
-    sms_mapper_w(2, sms.fcr[2]);
-    sms_mapper_w(1, sms.fcr[1]);
-    sms_mapper_w(0, sms.fcr[0]);
+        sms_mapper_w(3, sms.fcr[3]);
+        sms_mapper_w(2, sms.fcr[2]);
+        sms_mapper_w(1, sms.fcr[1]);
+        sms_mapper_w(0, sms.fcr[0]);
+    }
 
     /* Force full pattern cache update */
 //    is_vram_dirty = 1;

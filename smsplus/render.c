@@ -265,11 +265,14 @@ void in_ram(render_reset)(void)
         palette_sync(i);
     }
 
-    /* Invalidate pattern cache */
-    for (i = 0; i < 512 * 4; i++)
-        cachePtr[i] = -1;
-    for (i = 0; i < 512; i++)
-        vramMarkTileDirty(i);
+    /* Invalidate pattern cache (not allocated for SG-1000) */
+    if (!IS_SG)
+    {
+        for (i = 0; i < 512 * 4; i++)
+            cachePtr[i] = -1;
+        for (i = 0; i < 512; i++)
+            vramMarkTileDirty(i);
+    }
 
     /* Set up viewport size */
     if (IS_GG)
@@ -306,6 +309,22 @@ void in_ram(render_line)(int line)
     /* Point to current line in output buffer */
     // linebuf = &bitmap.data[(line * bitmap.pitch)];
     linebuf = &bitmap.data[0];
+
+    if (IS_SG)
+    {
+        /* TMS9918A: R1 bit 6 enables the display */
+        if (vdp.reg[1] & 0x40)
+        {
+            tms_render_bg(line);
+            tms_render_obj(line);
+        }
+        else
+        {
+            __builtin_memset(linebuf, BACKDROP_COLOR, SMS_WIDTH);
+        }
+        sms_render_line(line, linebuf);
+        return;
+    }
 
     /* Blank line */
     if ((!(vdp.reg[1] & 0x40)) || (((vdp.reg[2] & 1) == 0) && (IS_SMS)))
@@ -620,6 +639,7 @@ void in_ram(render_obj)(int line)
 
 extern void sms_palette_sync(int index);
 extern void sms_palette_syncGG(int index);
+extern void sms_palette_syncSG(int index);
 
 /* Update a palette entry */
 void in_ram(palette_sync)(int index)
@@ -653,6 +673,11 @@ void in_ram(palette_sync)(int index)
     if (IS_GG)
     {
         sms_palette_syncGG(index);
+    }
+    else if (IS_SG)
+    {
+        /* Fixed TMS9918A palette */
+        sms_palette_syncSG(index);
     }
     else
     {

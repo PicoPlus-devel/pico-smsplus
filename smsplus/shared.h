@@ -46,6 +46,7 @@ extern "C" {
 #include "sms.h"
 #include "vdp.h"
 #include "render.h"
+#include "tms.h"
 #include "sn76496.h"
 #include "system.h"
 #if PICO_RP2350
