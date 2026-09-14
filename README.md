@@ -7,7 +7,7 @@ The code for HDMI output is based on [Shuichi Takano's Pico-InfoNes project](htt
 Create a FAT32 (recommended. see [#29](https://github.com/fhoedemakers/pico-smsplus/issues/29)) or exFAT formatted SD card and copy your Master System (.sms), Game Gear (.gg) and/or SG-1000 (.sg) roms and optional [metadata](#using-metadata) on to it.
 You can organize the roms in directories. A menu is displayed on which you can select the rom to play. The last 20 games you started are kept in a [recently played list](#recently-played-games), one button press away in the menu.
 
-Supports two controllers for two player Master System games. [See "about two player games" below for specifics and limitations](#about-two-player-games) 
+Supports two controllers for two player Master System and SG-1000 games. [See "about two player games" below for specifics and limitations](#about-two-player-games) 
 
 Save and load state possible.
 
@@ -39,7 +39,7 @@ Sega SG-1000 cartridge images with the `.sg` file extension can be played. The e
 - The RAM expansion used by several Taiwanese releases (for example Knightmare and TwinBee) and the extra cartridge RAM of titles such as The Castle are detected automatically.
 - Save states are supported. SG-1000 cartridges have no battery-backed saves.
 - The SG-1000 has a fixed palette and no FM sound; the YM2413 FM setting has no effect for these games.
-- SC-3000 (`.sc`) and SF-7000 (`.sf`) software is not supported.
+- The [metadata pack](#using-metadata) does not contain box art or game information for SG-1000 games yet.
 
 ***
 
@@ -325,7 +325,7 @@ In the list:
 
 Games are added to the list automatically when you start them, so nothing has to be enabled. Starting a game that is already in the list moves it back to the top. The list closes by itself after a minute without input.
 
-The list is kept in **`/recent_SMS.txt`** in the root of the SD card, as plain text with one game per line. Master System and Game Gear roms share the one list. It survives a reboot and can be read, edited or deleted on a PC. Deleting the file simply empties the list, and a damaged file is treated as an empty list — unlike the settings file, nothing else is reset. Each emulator running under [pico-bootLoader](https://github.com/fhoedemakers/pico-bootLoader) keeps its own list.
+The list is kept in **`/recent_SMS.txt`** in the root of the SD card, as plain text with one game per line. Master System, Game Gear and SG-1000 roms share the one list. It survives a reboot and can be read, edited or deleted on a PC. Deleting the file simply empties the list, and a damaged file is treated as an empty list — unlike the settings file, nothing else is reset. Each emulator running under [pico-bootLoader](https://github.com/fhoedemakers/pico-bootLoader) keeps its own list.
 
 If a game was moved, renamed or deleted on the SD card in the meantime, the list says so instead of starting it. Use SELECT to remove such an entry.
 
@@ -387,7 +387,7 @@ You can easily convert MP3 files to WAV using [Audacity](https://www.audacitytea
 
 <img alt="Screenshot 2025-10-19 14-57-45" src="https://github.com/user-attachments/assets/da91016f-093b-4b96-8d8e-5a0f37cf2506" />
 
-Download the metadata pack from the [releases page](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip) It contains box art, game info and themed borders/bezels for many games. The metadata is used in the menu to show box art and game info when a rom is selected.  When the screensaver is started, random box art is shown. Extra on RP2350 boards: When in-game, themed borders/bezels are shown around the game screen.
+Download the metadata pack from the [releases page](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip) It contains box art, game info and themed borders/bezels for many Master System and Game Gear games; SG-1000 games are not included yet. The metadata is used in the menu to show box art and game info when a rom is selected.  When the screensaver is started, random box art is shown. Extra on RP2350 boards: When in-game, themed borders/bezels are shown around the game screen.
 
 - Download pack [here](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip).  
   - Extract the zip contents to the **root of the SD card**.  
@@ -413,6 +413,8 @@ Use ./bld.sh --h for options.
 
 The resulting .uf2 file will be in the releases/ folder. Copy it to the Pico when in bootloader mode.
 
+The emulator core can also be run on Linux without a board, for testing and debugging. See [hosttest/README.md](hosttest/README.md).
+
 ***
 
 ## Credits
@@ -422,6 +424,8 @@ This emulator is other people's work brought together on a Pico.
 **Emulation**
 
 - [SMS Plus](https://segaretro.org/SMS_Plus) by **Charles MacDonald** — the Sega Master System and Game Gear emulator core this project is built on.
+- The SG-1000 (TMS9918A) video modes are ported from **SMS Plus GX** by **Charles MacDonald** and **Eke-Eke**, as included in [retro-go](https://github.com/ducalex/retro-go).
+- Detection of the Taiwanese SG-1000 RAM expansion is based on [PicoDrive](https://github.com/notaz/picodrive).
 - The Z80 CPU core is **Juergen Buchmueller**'s portable Z80 emulator.
 - [emu2413](https://github.com/digital-sound-antiques/emu2413) by **Mitsutaka Okazaki** — YM2413 (OPLL) FM sound for the Japanese Master System games that use it.
 
