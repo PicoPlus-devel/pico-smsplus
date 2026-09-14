@@ -15,7 +15,6 @@ For board-by-board wiring, supported display modes and more refer to the [pico-i
 
 - **Sega SG-1000 games.** Roms with the `.sg` extension can now be played. Copy them to the SD card next to your Master System and Game Gear roms. Save states work as usual.
 - The extension must be lowercase: rename files ending in `.SG` to `.sg`.
-- SC-3000 (`.sc`) and SF-7000 (`.sf`) software is not supported.
 
 # v0.28 Release notes
 
