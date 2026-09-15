@@ -15,6 +15,7 @@ For board-by-board wiring, supported display modes and more refer to the [pico-i
 
 - **Sega SG-1000 games.** Roms with the `.sg` extension can now be played. Copy them to the SD card next to your Master System and Game Gear roms. Save states work as usual.
 - The extension must be lowercase: rename files ending in `.SG` to `.sg`.
+- **Metadata for SG-1000 games.** The [metadata pack](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip) now also contains box art and game information for SG-1000 games. Download it again and extract it to the root of the SD card. Thanks again **Gavin Knight** ([DynaMight1124](https://github.com/DynaMight1124))
 
 # v0.28 Release notes
 
