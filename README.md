@@ -39,7 +39,7 @@ Sega SG-1000 cartridge images with the `.sg` file extension can be played. The e
 - The RAM expansion used by several Taiwanese releases (for example Knightmare and TwinBee) and the extra cartridge RAM of titles such as The Castle are detected automatically.
 - Save states are supported. SG-1000 cartridges have no battery-backed saves.
 - The SG-1000 has a fixed palette and no FM sound; the YM2413 FM setting has no effect for these games.
-- The [metadata pack](#using-metadata) contains box art and game information for SG-1000 games. There are no themed bezels for SG-1000 games.
+- The [metadata pack](#using-metadata) contains box art, game information and themed bezels for SG-1000 games.
 
 ***
 
@@ -387,7 +387,7 @@ You can easily convert MP3 files to WAV using [Audacity](https://www.audacitytea
 
 <img alt="Screenshot 2025-10-19 14-57-45" src="https://github.com/user-attachments/assets/da91016f-093b-4b96-8d8e-5a0f37cf2506" />
 
-Download the metadata pack from the [releases page](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip) It contains box art and game info for many Master System, Game Gear and SG-1000 games, and themed borders/bezels for Master System and Game Gear games. The metadata is used in the menu to show box art and game info when a rom is selected.  When the screensaver is started, random box art is shown. Extra on RP2350 boards: When in-game, themed borders/bezels are shown around the game screen of Master System and Game Gear games.
+Download the metadata pack from the [releases page](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip) It contains box art, game info and themed borders/bezels for many Master System, Game Gear and SG-1000 games. The metadata is used in the menu to show box art and game info when a rom is selected.  When the screensaver is started, random box art is shown. Extra on RP2350 boards: When in-game, themed borders/bezels are shown around the game screen.
 
 - Download pack [here](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip).  
   - Extract the zip contents to the **root of the SD card**.  
