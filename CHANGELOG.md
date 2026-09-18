@@ -16,6 +16,7 @@ For board-by-board wiring, supported display modes and more refer to the [pico-i
 - **Sega SG-1000 games.** Roms with the `.sg` extension can now be played. Copy them to the SD card next to your Master System and Game Gear roms. Save states work as usual.
 - The extension must be lowercase: rename files ending in `.SG` to `.sg`.
 - **Metadata for SG-1000 games.** The [metadata pack](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip) now also contains box art, game information and themed bezels for SG-1000 games. The bezels are shown in-game on RP2350 boards. Download it again and extract it to the root of the SD card. Thanks again **Gavin Knight** ([DynaMight1124](https://github.com/DynaMight1124))
+- **USB drive mode**: the settings menu can now show the SD card on your computer over USB, so you can add or remove games without taking the card out. Open the menu with SELECT from the game list, pick *USB drive mode*, then eject the drive on your computer when you are done. It is not available while a game is running. See [USB drive mode](https://github.com/fhoedemakers/pico-smsplus#usb-drive-mode).
 
 # v0.28 Release notes
 

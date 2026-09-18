@@ -13,6 +13,8 @@ Save and load state possible.
 
 Battery backed saves stored on SD for games that support this. 
 
+The SD card can be shown on a computer as a USB drive from the settings menu, so games can be added or removed without taking the card out. See [USB drive mode](#usb-drive-mode).
+
 See the [releases](https://github.com/fhoedemakers/pico-smsplus/releases/latest) page for the supported RP2040/RP2350 boards.
 
 ***
@@ -69,7 +71,7 @@ A number of Japanese Master System games can use the **YM2413 (OPLL) FM sound ch
 
 and a number of others. Games that do not support FM are unaffected by the setting — they never address the chip and sound exactly the same either way.
 
-FM emulation is **off by default**. Turn it on with the **YM2413 FM** entry in the settings menu.
+FM emulation is **off by default**. Turn it on with the **YM2413 FM** entry in the [settings menu](#settings-menu).
 
 > [!IMPORTANT]
 > Enabling YM2413 FM raises the processor clock from 252 MHz to **378 MHz** to cover the extra work of emulating the chip. The board reboots to apply the new clock, and reboots again when the setting is turned back off. For that reason it is worth leaving off unless you are actually playing a game that uses FM.
@@ -304,11 +306,11 @@ Gamepad buttons:
 - Button1 : Back to parent folder.
 - Button3 : Open the [recently played list](#recently-played-games).
 - START: Show metadata and box art (when available). 
-- SELECT: Opens a setting menu. Here you can change settings like screen mode, scanlines, framerate display, menu colors and other board specific settings. Settings can also be changed in-game by pressing some button combinations as explained below. The settings menu can also be opened in-game.
+- SELECT: Opens the settings menu. Here you can change settings like screen mode, scanlines, framerate display, menu colors and other board specific settings. Settings can also be changed in-game by pressing some button combinations as explained below. The settings menu can also be opened in-game. See [Settings menu](#settings-menu) below for the full list.
 
 ## Recently played games
 
-The menu keeps a list of the **last 20 games you started**, most recent first. Open it with **Button3** in the menu, or with the **Recently played** entry at the top of the settings menu. That entry is only there when the settings menu is opened from the menu — a game cannot be started from inside a running game.
+The menu keeps a list of the **last 20 games you started**, most recent first. Open it with **Button3** in the menu, or with the **Recently played** entry at the top of the [settings menu](#settings-menu). That entry is only there when the settings menu is opened from the menu — a game cannot be started from inside a running game.
 
 > [!NOTE]
 > On an original 3-button Genesis Mini controller, C acts as SELECT and opens the settings menu instead. Take the **Recently played** entry there.
@@ -331,10 +333,60 @@ If a game was moved, renamed or deleted on the SD card in the meantime, the list
 
 On boards **without** PSRAM, one entry can be tagged **[READY]**. That is the game whose rom is currently written to flash, which is the one that starts without waiting for the flashing step.
 
+## Settings menu
+
+The settings menu is opened with SELECT from the main menu, or with SELECT + START while a game is running. Not every entry is available on every board or in every situation.
+
+| Setting | Description |
+| ------- | ----------- |
+| Recently played | Open the list of the [last 20 games you started](#recently-played-games) and restart one of them. Menu only, not available in-game. |
+| Quit game | Leave the game and return to the SD card menu. Battery-backed save RAM is written to the SD card here. In-game only. |
+| Reset game | Reset the running game. In-game only. |
+| Return to emulator selection | Go back to the emulator picker. Only present when running under [pico-bootLoader](https://github.com/fhoedemakers/pico-bootLoader). |
+| Save/Load State | Manage save states. In-game only. |
+| Screen Mode | Cycle the screen modes, with or without scanlines. RP2040 boards also offer the 8:7 pixel aspect ratio modes; RP2350 boards only the 1:1 modes. |
+| Scanline Type | Simple or LCD style scanlines. HSTX boards only. |
+| Framerate Overlay | Show the frames per second on screen. |
+| Display Mode | HDMI or DVI output. HSTX boards only. |
+| External Audio | Route audio to the I2S/line-out output instead of HDMI. Only on boards with such an output, for example the Pimoroni Pico DV Demo Base, the Fruit Jam and the Murmulator. Selecting DVI as Display Mode enables this automatically, because DVI carries no audio. |
+| Menu Font Color / Menu Font Back Color | Menu colors (0-63). |
+| Fruit Jam VU Meter / Fruit Jam Volume Control | Fruit Jam only. |
+| YM2413 FM | FM sound for the Japanese Master System games that use it. Off by default. HSTX boards only. Changing it reboots the board to switch the processor clock, also when changed in-game, so change it from the main menu. See [YM2413 FM sound](#ym2413-fm-sound). |
+| Enter BOOTSEL Mode | Reboot into BOOTSEL so you can flash new firmware. |
+| Controller Test | Show a gamepad graphic that follows the controller you last pressed a button on, plus a list of connected input sources. Useful for checking wiring and button mappings. Hold SELECT + START for 2 seconds to exit. |
+| USB drive mode | Show the SD card on a computer as a USB drive, so games can be added or removed without taking the card out. See [USB drive mode](#usb-drive-mode). Menu only, not available in-game. |
+
+> [!NOTE]
+> Changes are only applied when you select **SAVE**. **CANCEL** or Button1 discards them, **DEFAULT** restores the default values.
+
+## USB drive mode
+
+USB drive mode presents the SD card to a computer as a USB mass storage device, so games can be added or removed without taking the card out of the console. Connect the console to the computer, open the [settings menu](#settings-menu) with SELECT from the menu and choose **USB drive mode**. The card appears on the computer as a removable drive.
+
+The entry is only offered when the settings menu is opened from the menu. It is not available while a game is running: the running game holds its save files open and its rom is mapped out of flash, and letting the computer rewrite the card underneath that would corrupt both.
+
+When you are finished, eject the drive on the computer. The console notices this and leaves USB drive mode by itself. Pressing Button1 on the console leaves as well, for when no computer is attached. The rom list is re-read on the way out, so files added from the computer appear without having to restart.
+
+> [!NOTE]
+> Transfers are slow. The console is a USB full-speed device and reaches the card a sector at a time over SPI, so copying is far slower than reading the card in a card reader. USB drive mode is meant for adding or replacing a few games. For filling a card, or for copying a large amount of data, take the card out and use a card reader.
+
+Behaviour depends on where controllers are connected on your board.
+
+| Board | Behaviour |
+| ----- | --------- |
+| Controllers on a separate USB port (boards built with PIO USB, such as the Fruit Jam) | The console's own USB port is free, so controllers keep working and the screen stays on. The menu returns to the rom list when you are done. |
+| Controllers on the console's own USB port | That port is the one connected to the computer, so a USB controller cannot be used while the card is mounted. Press Button1 on a controller in the NES controller port, or eject the drive on the computer. The console restarts afterwards. |
+| RP2040 boards | As above, and the screen is switched off for as long as the card is mounted. These boards cannot drive the video output while the computer is reading the card. The menu explains this first and lets you go back without mounting anything. |
+
+> [!CAUTION]
+> Eject the drive on the computer rather than pressing Button1. Ejecting makes the computer write out anything it still had cached, and the console leaves USB drive mode on its own once it has. Pressing Button1 while the computer still has the drive open can leave files on the card incomplete.
+
 ## Emulator (in game)
 Gamepad buttons:
-- SELECT + START, Xbox button: opens the settings menu. From there, you can:
+- SELECT + START, Xbox button: opens the [settings menu](#settings-menu). From there, you can:
   - Quit the game and return to the SD card menu
+  - Reset the game
+  - Manage save states.
   - Adjust settings and resume your game.
 - SELECT + UP/SELECT + DOWN: switches screen modes.
 - START + Button2 : Toggle framerate display
@@ -441,6 +493,7 @@ This emulator is other people's work brought together on a Pico.
 - [tusb_xinput](https://github.com/Ryzee119/tusb_xinput) by **Ryan Wendland** ([@Ryzee119](https://github.com/Ryzee119)) — Xbox controller support.
 - [Pico-PIO-USB](https://github.com/sekigon-gonnoc/Pico-PIO-USB) by [@sekigon-gonnoc](https://github.com/sekigon-gonnoc) — the second USB port on the boards that have one.
 - [lwmem](https://github.com/MaJerle/lwmem) by **Tilen Majerle** ([@MaJerle](https://github.com/MaJerle)) — allocator used for the PSRAM heap.
+- [Adafruit_ColecoJam](https://github.com/cogliano/Adafruit_ColecoJam) by **Dan Cogliano** ([@cogliano](https://github.com/cogliano)) — USB drive mode is derived from it.
 - [PicoPlusPsram](https://github.com/AndrewCapon/PicoPlusPsram) by **Andrew Capon** ([@AndrewCapon](https://github.com/AndrewCapon)) — PSRAM detection and setup.
 - The (S)NES and Wii Classic controller support goes back to work by **Phil Burgess** ([@PaintYourDragon](https://github.com/PaintYourDragon)) and **Adafruit**.
 

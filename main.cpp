@@ -53,43 +53,40 @@ extern const unsigned char EmuOverlay_555[];
 
 #define EMULATOR_CLOCKFREQ_KHZ 252000 //  Overclock frequency in kHz when using Emulator
 static uint32_t CPUFreqKHz = EMULATOR_CLOCKFREQ_KHZ;
-// Visibility configuration for options menu (NES specific)
-// 1 = show option line, 0 = hide.
-// Order must match enum in menu_options.h
+// Visibility configuration for options menu
+// 1 = show option line, 0 = hide, -1 = always hidden.
+// Designated initializers, like g_settings_descriptions in menu_settings.h, so
+// each value stays bound to its enum tag; options not listed are hidden (0).
 const int8_t g_settings_visibility_sms[MOPT_COUNT] = {
-    0,                               // Exit Game, or back to menu. Always visible when in-game.
-    0,                               // Reset Game
-    BOOTLOADER_BUILD,                // Return to emuLoader picker (only when built for the loader)
-    0,                               // Save / Restore State
-    1,                               // Screen Mode
-    0,                               // Scanlines toggle (superseded by Screen Mode)
-    HSTX,                            // Scanline Type (HSTX only)
-    1,                               // FPS Overlay
-    0,                               // Audio Enable
-    0,                               // Frame Skip
-    HSTX && ENABLEDVI,               // Display Mode (HDMI or DVI, only when HSTX is enabled, because non-HSTX builds always use HDMI)
-    (EXT_AUDIO_IS_ENABLED ),         // External Audio
-    1,                               // Font Color
-    1,                               // Font Back Color
-    ENABLE_VU_METER,                 // VU Meter
-    //(HW_CONFIG == 8),                // Fruit Jam Internal Speaker
-    (HW_CONFIG == 8),                // Fruit Jam Volume Control
-    0,                               // DMG Palette (NES emulator does not use GameBoy palettes)
-    0,                               // Border Mode (Super Gameboy style borders not applicable for NES)
-    0,                               // Rapid Fire on A
-    0,                               // Rapid Fire on B
-    0,                               // Auto Insert Disk A, enabled at runtime on RP2350
-    0,                               // Auto Swap FDS, enabled at runtime on RP2350
-    0,                               // FDS Disk Swap (toggled on after fdsParse succeeds)
-    0,                               // Overclock (CPU high clock toggle)
-#if HSTX
-    1,                               // YM2413 FM (SMS only, RP2350-only with HSTX)
-#else
-    0,
-#endif
-    1,                               // Enter bootsel mode
-    1,                               // Controller Test
-   
+    [MOPT_EXIT_GAME]                 = 0,  // Always visible when in-game.
+    [MOPT_RESET_GAME]                = 0,  // Always visible when in-game.
+    [MOPT_REBOOT_TO_LOADER]          = BOOTLOADER_BUILD, // Only when built for the loader
+    [MOPT_SAVE_RESTORE_STATE]        = 0,  // Always visible when in-game.
+    [MOPT_SCREENMODE]                = 1,
+    [MOPT_SCANLINES]                 = 0,  // Superseded by Screen Mode
+    [MOPT_SCANLINE_TYPE]             = HSTX,
+    [MOPT_FPS_OVERLAY]               = 1,
+    [MOPT_AUDIO_ENABLE]              = 0,
+    [MOPT_FRAMESKIP]                 = 0,
+    [MOPT_DISPLAY_MODE]              = HSTX && ENABLEDVI, // non-HSTX builds always use HDMI
+    [MOPT_EXTERNAL_AUDIO]            = (EXT_AUDIO_IS_ENABLED),
+    [MOPT_FONT_COLOR]                = 1,
+    [MOPT_FONT_BACK_COLOR]           = 1,
+    [MOPT_FRUITJAM_VUMETER]          = ENABLE_VU_METER,
+    [MOPT_FRUITJAM_VOLUME_CONTROL]   = (HW_CONFIG == 8),
+    [MOPT_DMG_PALETTE]               = 0,  // Game Boy only
+    [MOPT_BORDER_MODE]               = 0,  // Game Boy only
+    [MOPT_RAPID_FIRE_ON_A]           = 0,
+    [MOPT_RAPID_FIRE_ON_B]           = 0,
+    [MOPT_AUTO_INSERT_FDS_DISK_A]    = 0,  // FDS (NES) only
+    [MOPT_AUTO_SWAP_FDS_DISK]        = 0,  // FDS (NES) only
+    [MOPT_FDS_DISK_SWAP]             = 0,  // FDS (NES) only
+    [MOPT_OVERCLOCK]                 = 0,
+    [MOPT_FM_AUDIO]                  = HSTX, // YM2413 FM, RP2350 with HSTX only
+    [MOPT_ENTER_BOOTSEL_MODE]        = 1,
+    [MOPT_CONTROLLER_TEST]           = 1,
+    [MOPT_RECENT_GAMES]              = 1,  // Rom browser only; menu.cpp gates in-game
+    [MOPT_USB_DRIVE_MODE]            = 0,  // USB drive mode (menu.cpp force-shows this in the rom browser)
 };
 const uint8_t g_available_screen_modes_sms[] = {
 #if PICO_RP2350
