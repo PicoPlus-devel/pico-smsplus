@@ -1,10 +1,10 @@
 
 # pico-smsplus, A Sega Master System, Game Gear and SG-1000 emulator for RP2040/RP2350 based boards.
 
-This software is a port of [SmsPlus](https://segaretro.org/SMS_Plus), a Sega Master System and Game Gear emulator for RP2040/RP2350 based microcontroller boards like the RaspberryPi Pico and Pico 2. Sound and video are ouput over HDMI. Support for the Sega SG-1000 has been added to this port; see [SG-1000 support](#sg-1000-support).
+This software is a port of [SmsPlus](https://segaretro.org/SMS_Plus), a Sega Master System and Game Gear emulator for RP2040/RP2350 based microcontroller boards like the RaspberryPi Pico and Pico 2. Sound and video are output over HDMI. Support for the Sega SG-1000 has been added to this port; see [SG-1000 support](#sg-1000-support).
 The code for HDMI output is based on [Shuichi Takano's Pico-InfoNes project](https://github.com/shuichitakano/pico-infones) which in turn is based on [PicoDVI](https://github.com/Wren6991/PicoDVI).
 
-Create a FAT32 (recommended. see [#29](https://github.com/fhoedemakers/pico-smsplus/issues/29)) or exFAT formatted SD card and copy your Master System (.sms), Game Gear (.gg) and/or SG-1000 (.sg) roms and optional [metadata](#using-metadata) on to it.
+Create a FAT32 (recommended. see [#29](https://github.com/PicoPlus-devel/pico-smsplus/issues/29)) or exFAT formatted SD card and copy your Master System (.sms), Game Gear (.gg) and/or SG-1000 (.sg) roms and optional [metadata](#using-metadata) on to it.
 You can organize the roms in directories. A menu is displayed on which you can select the rom to play. The last 20 games you started are kept in a [recently played list](#recently-played-games), one button press away in the menu.
 
 Supports two controllers for two player Master System and SG-1000 games. [See "about two player games" below for specifics and limitations](#about-two-player-games) 
@@ -15,7 +15,7 @@ Battery backed saves stored on SD for games that support this.
 
 The SD card can be shown on a computer as a USB drive from the settings menu, so games can be added or removed without taking the card out. See [USB drive mode](#usb-drive-mode).
 
-See the [releases](https://github.com/fhoedemakers/pico-smsplus/releases/latest) page for the supported RP2040/RP2350 boards.
+See the [releases](https://github.com/PicoPlus-devel/pico-smsplus/releases/latest) page for the supported RP2040/RP2350 boards.
 
 ***
 
@@ -89,14 +89,14 @@ On every other configuration — all RP2040 boards, and the RP2350 boards that u
 
 ***
 
-## System requirements and setup - What do yo need?
+## System requirements and setup - What do you need?
 
-The binary specific for your config can be downloaded from the [releases](https://github.com/fhoedemakers/pico-smsplus/releases/latest) page.
+The binary specific for your config can be downloaded from the [releases](https://github.com/PicoPlus-devel/pico-smsplus/releases/latest) page.
 
-You need a FAT32 or exFAT formatted SD card to put your .sms, .gg and .sg roms on, preferably in /roms/SMS (subdirectory organization is supported). It is highly recommended to use FAT32, see https://github.com/fhoedemakers/pico-smsplus/issues/29
+You need a FAT32 or exFAT formatted SD card to put your .sms, .gg and .sg roms on, preferably in /roms/SMS (subdirectory organization is supported). It is highly recommended to use FAT32, see https://github.com/PicoPlus-devel/pico-smsplus/issues/29
 
 >[!NOTE]
-> For detailed instructions how to setup specific configurations, see the [Pico-InfonesPlus sister project](https://github.com/fhoedemakers/pico-infonesPlus).
+> For detailed instructions how to setup specific configurations, see the [Pico-InfonesPlus sister project](https://github.com/PicoPlus-devel/pico-infonesPlus).
 
 *** 
 
@@ -122,7 +122,7 @@ These boards already contain an RP2040 cpu, a separate Raspberry Pi Pico is not 
 - [Adafruit Metro RP2350](https://www.adafruit.com/product/6003) or [Adafruit Metro RP2350 with PSRAM](https://www.adafruit.com/product/6267)
 - [Pimoroni Pico Plus 2](https://shop.pimoroni.com/products/pimoroni-pico-plus-2?variant=42092668289107)
   Use the breadboard config, the Pimoroni Pico DV Demo base, or the [PicoNES PCB](#picones-pcb) from design v2.6 onwards — that revision added through-holes, so the board can be plugged in on male headers instead of lying flat against the PCB, which the SP/CE connector on its back prevents.
-  The PSRAM on the board is used in stead of flash to load the roms from SD.
+  The PSRAM on the board is used instead of flash to load the roms from SD.
 - [Waveshare RP2350-PiZero](https://www.waveshare.com/rp2350-pizero.htm)
 - [Waveshare RP2350-Zero](https://www.waveshare.com/rp2350-zero.htm) and [Waveshare RP2350-USB-A](https://www.waveshare.com/rp2350-usba.htm), each on their own PCB — see [Custom PCBs](#custom-pcbs).
 
@@ -139,9 +139,9 @@ Three community PCB designs turn a supported board and its breakouts into a fini
 | [PicoNES Mini](#picones-mini-pcb) | Waveshare RP2350-Zero | `-c6` | `Gerber_PicoNES_Mini_PCB_v2.0.zip` | Gavin Knight |
 | [PicoNES Micro](#picones-micro-pcb) | Waveshare RP2350-USB-A | `-c9` | `Gerber_PicoNES_Micro_v1.2.zip` | Gavin Knight |
 
-All three archives are attached to every [release](https://github.com/fhoedemakers/pico-smsplus/releases/latest) of this project and also live in [pico_shared/PCB](https://github.com/fhoedemakers/pico_shared/tree/main/PCB). Upload the zip as-is to a PCB manufacturer of your choice; [PCBWay](https://www.pcbway.com/) and JLCPCB are both good options.
+All three archives are attached to every [release](https://github.com/PicoPlus-devel/pico-smsplus/releases/latest) of this project and also live in [pico_shared/PCB](https://github.com/PicoPlus-devel/pico_shared/tree/main/PCB). Upload the zip as-is to a PCB manufacturer of your choice; [PCBWay](https://www.pcbway.com/) and JLCPCB are both good options.
 
-The designs come from [pico-infonesPlus](https://github.com/fhoedemakers/pico-infonesPlus) and kept their NES-flavoured names, but there is nothing NES-specific about them — they are DVI, microSD and controller wiring, and this emulator runs on them just as well. The PicoNES and PicoNES Mini both have two controller ports, so [two player Master System games](#about-two-player-games) work on them; the PicoNES Micro is a single-controller design.
+The designs come from [pico-infonesPlus](https://github.com/PicoPlus-devel/pico-infonesPlus) and kept their NES-flavoured names, but there is nothing NES-specific about them — they are DVI, microSD and controller wiring, and this emulator runs on them just as well. The PicoNES and PicoNES Mini both have two controller ports, so [two player Master System games](#about-two-player-games) work on them; the PicoNES Micro is a single-controller design.
 
 > [!NOTE]
 > Sellers on AliExpress have copied the PicoNES design and sell ready-made boards. For questions about those, contact the seller.
@@ -207,7 +207,7 @@ Gavin Knight ([DynaMight1124](https://github.com/DynaMight1124)) designed an NES
 
 <img width="480" alt="Top cover with a button for BOOTSEL" src="https://github.com/user-attachments/assets/3c8f8990-51b9-4873-9054-64bb2cd6c300" />
 
-For the full photo gallery and assembly detail, see the [PCB section of the pico-infonesPlus documentation](https://github.com/fhoedemakers/pico-infonesPlus#pcb-with-raspberry-pi-pico-or-pico-2-and-pimoroni-pico-plus-2).
+For the full photo gallery and assembly detail, see the [PCB section of the pico-infonesPlus documentation](https://github.com/PicoPlus-devel/pico-infonesPlus#pcb-with-raspberry-pi-pico-or-pico-2-and-pimoroni-pico-plus-2).
 
 ## PicoNES Mini PCB
 
@@ -260,7 +260,7 @@ The following controllers are supported.
 
 Also original NES and WII-classic controllers are supported in some configurations. 
 
-See the [Pico-InfonesPlus sister project](https://github.com/fhoedemakers/pico-infonesPlus?tab=readme-ov-file#gamecontroller-support) for more info.
+See the [Pico-InfonesPlus sister project](https://github.com/PicoPlus-devel/pico-infonesPlus?tab=readme-ov-file#gamecontroller-support) for more info.
 
 ***
 
@@ -327,7 +327,7 @@ In the list:
 
 Games are added to the list automatically when you start them, so nothing has to be enabled. Starting a game that is already in the list moves it back to the top. The list closes by itself after a minute without input.
 
-The list is kept in **`/recent_SMS.txt`** in the root of the SD card, as plain text with one game per line. Master System, Game Gear and SG-1000 roms share the one list. It survives a reboot and can be read, edited or deleted on a PC. Deleting the file simply empties the list, and a damaged file is treated as an empty list — unlike the settings file, nothing else is reset. Each emulator running under [pico-bootLoader](https://github.com/fhoedemakers/pico-bootLoader) keeps its own list.
+The list is kept in **`/recent_SMS.txt`** in the root of the SD card, as plain text with one game per line. Master System, Game Gear and SG-1000 roms share the one list. It survives a reboot and can be read, edited or deleted on a PC. Deleting the file simply empties the list, and a damaged file is treated as an empty list — unlike the settings file, nothing else is reset. Each emulator running under [pico-bootLoader](https://github.com/PicoPlus-devel/pico-bootLoader) keeps its own list.
 
 If a game was moved, renamed or deleted on the SD card in the meantime, the list says so instead of starting it. Use SELECT to remove such an entry.
 
@@ -342,7 +342,7 @@ The settings menu is opened with SELECT from the main menu, or with SELECT + STA
 | Recently played | Open the list of the [last 20 games you started](#recently-played-games) and restart one of them. Menu only, not available in-game. |
 | Quit game | Leave the game and return to the SD card menu. Battery-backed save RAM is written to the SD card here. In-game only. |
 | Reset game | Reset the running game. In-game only. |
-| Return to emulator selection | Go back to the emulator picker. Only present when running under [pico-bootLoader](https://github.com/fhoedemakers/pico-bootLoader). |
+| Return to emulator selection | Go back to the emulator picker. Only present when running under [pico-bootLoader](https://github.com/PicoPlus-devel/pico-bootLoader). |
 | Save/Load State | Manage save states. In-game only. |
 | Screen Mode | Cycle the screen modes, with or without scanlines. RP2040 boards also offer the 8:7 pixel aspect ratio modes; RP2350 boards only the 1:1 modes. |
 | Scanline Type | Simple or LCD style scanlines. HSTX boards only. |
@@ -352,8 +352,8 @@ The settings menu is opened with SELECT from the main menu, or with SELECT + STA
 | Menu Font Color / Menu Font Back Color | Menu colors (0-63). |
 | Fruit Jam VU Meter / Fruit Jam Volume Control | Fruit Jam only. |
 | YM2413 FM | FM sound for the Japanese Master System games that use it. Off by default. HSTX boards only. Changing it reboots the board to switch the processor clock, also when changed in-game, so change it from the main menu. See [YM2413 FM sound](#ym2413-fm-sound). |
-| Enter BOOTSEL Mode | Reboot into BOOTSEL so you can flash new firmware. |
 | Controller Test | Show a gamepad graphic that follows the controller you last pressed a button on, plus a list of connected input sources. Useful for checking wiring and button mappings. Hold SELECT + START for 2 seconds to exit. |
+| Enter BOOTSEL Mode | Reboot into BOOTSEL so you can flash new firmware. |
 | USB drive mode | Show the SD card on a computer as a USB drive, so games can be added or removed without taking the card out. See [USB drive mode](#usb-drive-mode). Menu only, not available in-game. |
 
 > [!NOTE]
@@ -365,7 +365,7 @@ USB drive mode presents the SD card to a computer as a USB mass storage device, 
 
 The entry is only offered when the settings menu is opened from the menu. It is not available while a game is running: the running game holds its save files open and its rom is mapped out of flash, and letting the computer rewrite the card underneath that would corrupt both.
 
-When you are finished, eject the drive on the computer. The console notices this and leaves USB drive mode by itself. Pressing Button1 on the console leaves as well, for when no computer is attached. The rom list is re-read on the way out, so files added from the computer appear without having to restart.
+When you are finished, eject the drive on the computer. The console notices this and leaves USB drive mode by itself. Pressing Button1 on the console leaves as well, for when no computer is attached. If no computer connects within 20 seconds, the console leaves USB drive mode by itself. The rom list is re-read on the way out, so files added from the computer appear without having to restart.
 
 > [!NOTE]
 > Transfers are slow. The console is a USB full-speed device and reaches the card a sector at a time over SPI, so copying is far slower than reading the card in a card reader. USB drive mode is meant for adding or replacing a few games. For filling a card, or for copying a large amount of data, take the card out and use a card reader.
@@ -388,14 +388,13 @@ Gamepad buttons:
   - Reset the game
   - Manage save states.
   - Adjust settings and resume your game.
-- SELECT + UP/SELECT + DOWN: switches screen modes.
+- SELECT + UP/SELECT + DOWN: switches screen modes. On the HSTX boards listed under [YM2413 FM sound](#ym2413-fm-sound) this toggles scanlines instead.
 - START + Button2 : Toggle framerate display
 - START + DOWN : (quick) Save state. (slot 5)
 - START + UP : (quick) Load state. (slot 5)
-- **Pimoroni Pico DV Demo Base only**: SELECT + LEFT: Switch audio output to the connected speakers on the line-out jack of the Pimoroni Pico DV Demo Base. The speaker setting will be remembered when the emulator is restarted.
+- **Pimoroni Pico DV Demo Base and Murmulator M1 only**: SELECT + LEFT: Switch audio output to the speakers connected to the line-out jack. The speaker setting will be remembered when the emulator is restarted.
 - **Fruit Jam Only** 
-  - SELECT + UP: Toggle scanlines.
-  - pushbutton 1 (on board): Mute audio of built-in speaker. Audio is still outputted to the audio jack. 
+  - Plugging in headphones mutes the built-in speaker; unplugging them turns it back on.
   - pushbutton 2 (on board) or SELECT + RIGHT: Toggles the VU meter on or off. (NeoPixel LEDs light up in sync with the music rhythm)
   - START + LEFT/RIGHT: Adjust volume of built-in speaker and external audio jack.
 - **RP2350 with PSRAM only**: Record about 30 seconds of audio by pressing START to pause the game and then START + BUTTON1. Audio is recorded to **/soundrecorder.wav** on the SD-card.
@@ -439,9 +438,9 @@ You can easily convert MP3 files to WAV using [Audacity](https://www.audacitytea
 
 <img alt="Screenshot 2025-10-19 14-57-45" src="https://github.com/user-attachments/assets/da91016f-093b-4b96-8d8e-5a0f37cf2506" />
 
-Download the metadata pack from the [releases page](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip) It contains box art, game info and themed borders/bezels for many Master System, Game Gear and SG-1000 games. The metadata is used in the menu to show box art and game info when a rom is selected.  When the screensaver is started, random box art is shown. Extra on RP2350 boards: When in-game, themed borders/bezels are shown around the game screen.
+Download the metadata pack from the [releases page](https://github.com/PicoPlus-devel/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip) It contains box art, game info and themed borders/bezels for many Master System, Game Gear and SG-1000 games. The metadata is used in the menu to show box art and game info when a rom is selected.  When the screensaver is started, random box art is shown. Extra on RP2350 boards: When in-game, themed borders/bezels are shown around the game screen.
 
-- Download pack [here](https://github.com/fhoedemakers/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip).  
+- Download pack [here](https://github.com/PicoPlus-devel/pico-smsplus/releases/latest/download/SMSPlusMetadata.zip).  
   - Extract the zip contents to the **root of the SD card**.  
   - In the menu:  
     - Highlight a game and press **START** → show cover art and metadata.  
@@ -461,7 +460,7 @@ Download the metadata pack from the [releases page](https://github.com/fhoedemak
 
 Use the bld.sh script to build the project. Build using Ubuntu Linux or WSL on Windows. See the Pico SDK installation instructions on how to set up the build environment.
 
-Use ./bld.sh --h for options.
+Use ./bld.sh -h for options.
 
 The resulting .uf2 file will be in the releases/ folder. Copy it to the Pico when in bootloader mode.
 
@@ -508,7 +507,7 @@ This emulator is other people's work brought together on a Pico.
 **This project**
 
 - **pico-smsplus** — the port to the Pico, the menu, the settings screen and the board support — is by **Frank Hoedemakers** ([@fhoedemakers](https://github.com/fhoedemakers)).
-- The menu, settings, controller handling and board configurations are shared with [pico-infonesPlus](https://github.com/fhoedemakers/pico-infonesPlus) and the other emulators in the family through [pico_shared](https://github.com/fhoedemakers/pico_shared).
+- The menu, settings, controller handling and board configurations are shared with [pico-infonesPlus](https://github.com/PicoPlus-devel/pico-infonesPlus) and the other emulators in the family through [pico_shared](https://github.com/PicoPlus-devel/pico_shared).
 - Part of the code and documentation was written with the assistance of **[Claude Code](https://claude.com/claude-code)**, Anthropic's agentic coding tool.
 
 ***
