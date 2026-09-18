@@ -392,3 +392,7 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# Host test harness build output and run results
+hosttest/sms_host
+hosttest/out/

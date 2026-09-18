@@ -71,11 +71,21 @@ void sms_init(void) {
 void sms_reset(void) {
     /* Clear SMS context */
 
-    __builtin_memset(sms.sram, 0, SRAMSIZEBYTES);
+    __builtin_memset(sms.sram, 0, SRAM_BYTES);
     __builtin_memset(sms.ram, 0, RAMSIZEBYTES);
 
     sms.paused = sms.save = sms.port_3F = sms.port_F2 = sms.irq = 0x00;
     sms.psg_mask = 0xFF;
+
+    if (IS_SG) {
+        /* Linear paging for the > 48 KB images that use the Sega mapper */
+        sms.fcr[0] = 0x00;
+        sms.fcr[1] = 0x00;
+        sms.fcr[2] = 0x01;
+        sms.fcr[3] = 0x02;
+        sg_memory_map();
+        return;
+    }
 
     /* Load memory maps with default values */
     cpu_readmap[0] = cart.rom + 0x0000;
@@ -110,8 +120,158 @@ void cpu_reset(void) {
 }
 
 
+/*--------------------------------------------------------------------------*/
+/* SG-1000                                                                  */
+/*--------------------------------------------------------------------------*/
+
+/* Unmapped ROM space reads as open bus. Kept in flash. */
+static const uint8 sg_open_bus[0x2000] = {[0 ... 0x1FFF] = 0xFF};
+
+/* Pages ($2000 and/or $8000) where a Taiwanese RAM adaptor may sit: bit n
+   set = page n. Derived from the ROM image, so not part of the save state. */
+static uint8 sg_adaptor_pages;
+
+/* True when the ROM image has no data in this 8 KB page (only $00/$FF) */
+static int sg_page_is_blank(int page) {
+    int base = page << 13;
+    int len = cart.size - base;
+    int i;
+
+    if (len > 0x2000) len = 0x2000;
+    for (i = 0; i < len; i++) {
+        uint8 b = cart.rom[base + i];
+        if (b != 0x00 && b != 0xFF) return 0;
+    }
+    return 1;
+}
+
+/* Build the SG-1000 memory map. Called after reset and after a state load.
+   $0000-$BFFF: cartridge ROM, 8 KB pages. Pages the ROM does not cover read
+   open bus below $8000 and are cartridge RAM (sms.sram, 8 KB mirrored) from
+   $8000 up (The Castle, Othello Multivision). Pages flagged in sms.port_3F
+   were found to be Taiwanese RAM adaptor pages by sg_writemem.
+   $C000-$FFFF: 8 KB work RAM, mirrored. */
+void sg_memory_map(void) {
+    int page;
+
+    sg_adaptor_pages = 0;
+    if (cart.size <= 0xC000) {
+        if (sg_page_is_blank(1)) sg_adaptor_pages |= (1 << 1);
+        if (sg_page_is_blank(4)) sg_adaptor_pages |= (1 << 4);
+    }
+
+    for (page = 0; page < 6; page++) {
+        if ((page << 13) < cart.size) {
+            cpu_readmap[page] = cart.rom + (page << 13);
+            cpu_writemap[page] = sms.dummy;
+        } else if (page < 4) {
+            cpu_readmap[page] = (uint8 *)sg_open_bus;
+            cpu_writemap[page] = sms.dummy;
+        } else {
+            cpu_readmap[page] = sms.sram;
+            cpu_writemap[page] = sms.sram;
+        }
+        if (sms.port_3F & (1 << page)) {
+            cpu_readmap[page] = sms.sram;
+            cpu_writemap[page] = sms.sram;
+        }
+    }
+    cpu_readmap[6] = sms.ram;
+    cpu_readmap[7] = sms.ram;
+    cpu_writemap[6] = sms.ram;
+    cpu_writemap[7] = sms.ram;
+
+    /* Images above 48 KB page through the Sega mapper (slots 1-3 only) */
+    if (cart.size > 0xC000) {
+        sms_mapper_w(1, sms.fcr[1]);
+        sms_mapper_w(2, sms.fcr[2]);
+        sms_mapper_w(3, sms.fcr[3]);
+    }
+}
+
+static void sg_writemem(int address, int data) {
+    int page = address >> 13;
+
+    if (cpu_writemap[page] != sms.dummy) {
+        cpu_writemap[page][address & 0x1FFF] = data;
+        /* $FFFC (RAM paging) does not exist on SG carts */
+        if (address >= 0xFFFD && cart.size > 0xC000) sms_mapper_w(address & 3, data);
+        return;
+    }
+
+    /* A write into $2000 or $8000 means the Taiwanese 8 KB RAM adaptor: map
+       RAM over that page from now on (idea from picodrive's write_bank_x8k).
+       Only pages without ROM data qualify; Sega carts such as Pop Flamer
+       write stray bytes into their own code, which must stay mapped. */
+    if (sg_adaptor_pages & (1 << page)) {
+        printf("SG: RAM adaptor detected at $%04X (write $%02X to $%04X)\n", page << 13, data, address);
+        sms.port_3F |= (1 << page);
+        cpu_readmap[page] = sms.sram;
+        cpu_writemap[page] = sms.sram;
+        sms.sram[address & 0x1FFF] = data;
+    }
+}
+
+/* Pad bits shared by the SMS port $DC and the SG-1000 even $C0-$FF ports */
+static uint8 read_port_dc(void) {
+    uint8 temp = 0xFF;
+    if (input.pad[0] & INPUT_UP) temp &= ~0x01;
+    if (input.pad[0] & INPUT_DOWN) temp &= ~0x02;
+    if (input.pad[0] & INPUT_LEFT) temp &= ~0x04;
+    if (input.pad[0] & INPUT_RIGHT) temp &= ~0x08;
+    if (input.pad[0] & INPUT_BUTTON2) temp &= ~0x10;
+    if (input.pad[0] & INPUT_BUTTON1) temp &= ~0x20;
+    if (input.pad[1] & INPUT_UP) temp &= ~0x40;
+    if (input.pad[1] & INPUT_DOWN) temp &= ~0x80;
+    return temp;
+}
+
+/* SG-1000 I/O is decoded on A7/A6 only */
+static void sg_writeport(int port, int data) {
+    switch (port & 0xC0) {
+        case 0x40: /* SN76489 PSG */
+            if (snd.log) {
+                snd.callback(0x03);
+                snd.callback(data);
+            }
+            if (snd.enabled) SN76496Write(0, data);
+            break;
+
+        case 0x80: /* TMS9918A: odd = control, even = data */
+            if (port & 1)
+                vdp_ctrl_w(data);
+            else
+                vdp_data_w(data);
+            break;
+    }
+}
+
+static int sg_readport(int port) {
+    uint8 temp;
+
+    switch (port & 0xC0) {
+        case 0x80: /* TMS9918A: odd = status, even = data */
+            return (port & 1) ? vdp_ctrl_r() : vdp_data_r();
+
+        case 0xC0: /* Joypads: even = $DC layout, odd = $DD layout */
+            if (!(port & 1)) return read_port_dc();
+            temp = 0xFF;
+            if (input.pad[1] & INPUT_LEFT) temp &= ~0x01;
+            if (input.pad[1] & INPUT_RIGHT) temp &= ~0x02;
+            if (input.pad[1] & INPUT_BUTTON2) temp &= ~0x04;
+            if (input.pad[1] & INPUT_BUTTON1) temp &= ~0x08;
+            return temp;
+    }
+    return 0xFF;
+}
+
+
 /* Write to memory */
 void cpu_writemem16(int address, int data) {
+    if (IS_SG) {
+        sg_writemem(address, data);
+        return;
+    }
     cpu_writemap[(address >> 13)][(address & 0x1FFF)] = data;
     if (address >= 0xFFFC) sms_mapper_w(address & 3, data);
 }
@@ -119,6 +279,10 @@ void cpu_writemem16(int address, int data) {
 
 /* Write to an I/O port */
 void cpu_writeport(int port, int data) {
+    if (IS_SG) {
+        sg_writeport(port, data);
+        return;
+    }
     switch (port & 0xFF) {
         case 0x01: /* GG SIO */
         case 0x02:
@@ -178,6 +342,8 @@ void cpu_writeport(int port, int data) {
 int cpu_readport(int port) {
     uint8 temp = 0xFF;
 
+    if (IS_SG) return sg_readport(port);
+
     switch (port & 0xFF) {
         case 0x01: /* GG SIO */
         case 0x02:
@@ -202,16 +368,7 @@ int cpu_readport(int port) {
 
         case 0xC0: /* INPUT #0 */
         case 0xDC:
-            temp = 0xFF;
-            if (input.pad[0] & INPUT_UP) temp &= ~0x01;
-            if (input.pad[0] & INPUT_DOWN) temp &= ~0x02;
-            if (input.pad[0] & INPUT_LEFT) temp &= ~0x04;
-            if (input.pad[0] & INPUT_RIGHT) temp &= ~0x08;
-            if (input.pad[0] & INPUT_BUTTON2) temp &= ~0x10;
-            if (input.pad[0] & INPUT_BUTTON1) temp &= ~0x20;
-            if (input.pad[1] & INPUT_UP) temp &= ~0x40;
-            if (input.pad[1] & INPUT_DOWN) temp &= ~0x80;
-            return (temp);
+            return (read_port_dc());
 
         case 0xC1: /* INPUT #1 */
         case 0xDD:

@@ -174,6 +174,15 @@ Z80_Regs *Z80_Context = &Z80;
 static UINT32 EA;
 int after_EI = 0;
 
+/* An IRQ asserted from an I/O handler (inside z80_execute) is taken when the
+   current instruction ends, as the Z80 samples INT between instructions.
+   Taking it at once would jump to the handler in the middle of an OTIR loop.
+   IRQ_DEFER_CYCLES pushes z80_ICount far enough below zero that the
+   instruction's own cycle refunds cannot restart the execute loop. */
+#define IRQ_DEFER_CYCLES 0x10000
+static int z80_executing;
+static int irq_deferred;
+
 static UINT8 SZ[256];        /* zero and sign flags */
 static UINT8 SZ_BIT[256];    /* zero, sign and parity/overflow (=zero) flags for BIT opcode */
 static UINT8 SZP[256];        /* zero, sign and parity flags */
@@ -4885,13 +4894,23 @@ void z80_exit(void) {
 int in_ram(z80_execute)(int cycles) {
     z80_ICount = cycles - Z80.extra_cycles;
     Z80.extra_cycles = 0;
+    z80_executing = 1;
 
     do {
-        _PPC = _PCD;
-        _R++;
-        EXEC_INLINE(op, ROP());
+        do {
+            _PPC = _PCD;
+            _R++;
+            EXEC_INLINE(op, ROP());
+        } while (z80_ICount > 0);
+
+        if (irq_deferred) {
+            irq_deferred = 0;
+            z80_ICount += IRQ_DEFER_CYCLES;
+            if (Z80.irq_state != CLEAR_LINE) take_interrupt();
+        }
     } while (z80_ICount > 0);
 
+    z80_executing = 0;
     z80_ICount -= Z80.extra_cycles;
     Z80.extra_cycles = 0;
 
@@ -5161,6 +5180,15 @@ void in_ram(z80_set_irq_line)(int irqline, int state) {
         } else {
             return;
         }
+    }
+    if (z80_executing) {
+        /* End the time slice after this instruction; z80_execute takes the
+           IRQ there. With IFF1 clear, a later EI checks irq_state instead. */
+        if (_IFF1 && !irq_deferred) {
+            irq_deferred = 1;
+            z80_ICount -= IRQ_DEFER_CYCLES;
+        }
+        return;
     }
     take_interrupt();
 }
