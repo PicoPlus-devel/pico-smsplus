@@ -120,13 +120,25 @@ void vdp_ctrl_w(int data) {
         if (vdp.code == 2) {
             int r = (data & 0x0F);
             int d = vdp.latch;
+            int was_tms = !(vdp.reg[0] & 0x04);
 
             /* Store register data */
             vdp.reg[r] = d;
 
-            /* Update table addresses */
-            vdp.ntab = (vdp.reg[2] << 10) & 0x3800;
+            /* Update table addresses. The 224-line mode reads a name table 32
+               rows tall, from a base of its own. */
+            vdp.ntab = IS_224_MODE ? (((vdp.reg[2] << 10) & 0x3000) | 0x0700)
+                                   : ((vdp.reg[2] << 10) & 0x3800);
             vdp.satb = (vdp.reg[5] << 7) & 0x3F00;
+
+            /* Switching between Mode 4 and the older modes changes where the
+               colours come from: CRAM in Mode 4, the fixed TMS9918A palette in
+               the others. */
+            if (r == 0 && was_tms != !(vdp.reg[0] & 0x04)) {
+                int i;
+                for (i = 0; i < PALETTE_SIZE; i++)
+                    palette_sync(i);
+            }
         }
     }
 }
@@ -235,8 +247,12 @@ void in_ram(vdp_run)(void) {
         return;
     }
 
-    if (vdp.line <= 0xC0) {
-        if (vdp.line == 0xC0) {
+    /* The frame interrupt comes after the last active line: $C0, or $E0 in
+       the 224-line mode */
+    int lines = VDP_LINES;
+
+    if (vdp.line <= lines) {
+        if (vdp.line == lines) {
             vdp.status |= 0x80;
         }
 
@@ -258,7 +274,7 @@ void in_ram(vdp_run)(void) {
     } else {
         vdp.left = vdp.reg[10];
 
-        if ((vdp.line < 0xE0) && (vdp.status & 0x80) && (vdp.reg[1] & 0x20)) {
+        if ((vdp.line < lines + 0x20) && (vdp.status & 0x80) && (vdp.reg[1] & 0x20)) {
             sms.irq = 1;
             z80_set_irq_line(0, ASSERT_LINE);
         }
@@ -267,6 +283,10 @@ void in_ram(vdp_run)(void) {
 
 
 uint8 vdp_vcounter_r(void) {
+    /* The table holds the 192-line count, which jumps back from $DA to $D5.
+       The 224-line mode counts on to $EA before jumping back to $E5. */
+    if (IS_224_MODE)
+        return (vdp.line <= 0xEA) ? vdp.line : vdp.line - 6;
     return (vcnt[(vdp.line & 0x1FF)]);
 }
 

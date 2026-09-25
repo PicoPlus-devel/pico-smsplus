@@ -1,6 +1,6 @@
 # CHANGELOG
 
-> Adds support for **Sega SG-1000** games, and a **USB drive mode** that shows the SD card on a computer, so games can be added without taking the card out.
+> Adds support for **Codemasters games** such as Micro Machines and the Dizzy games, and gets many more games past a black screen.
 
 # General Info
 
@@ -8,6 +8,25 @@
 [Binaries for each configuration and PCB design are at the end of this page](#downloads___).
 
 For board-by-board wiring, supported display modes and more refer to the [pico-infonesPlus documentation](https://github.com/PicoPlus-devel/pico-infonesPlus#setup). The set of supported boards and their pinouts is identical between the two projects.
+
+# v0.30 Release notes
+
+## What's new
+
+- **Codemasters games.** Micro Machines, Micro Machines 2, Fantastic Dizzy, The Excellent Dizzy Collection, Cosmic Spacehead, Dinobasher, Ernie Els Golf, Pete Sampras Tennis, Dropzone, Man Overboard! and CJ Elephant Fugitive now work, on Master System and Game Gear. Ernie Els Golf keeps its saves on the SD card.
+- **Taller picture of the Master System II.** Games that use it, such as the Codemasters games and Star Trek: The Next Generation on Game Gear, now show correctly. A few lines at the top and bottom are cut off.
+- **MSX conversions and Korean releases.** Most of these now start instead of showing a black screen, among them Bosconian, Dig Dug, Galaga, Pac-Man, Zaxxon, FA Tetris, Pooyan, F-16 Fighting Falcon, Girl's Garden and Loretta no Shouzou.
+- **Overscan fix in menu.** A new setting for TVs that cut off the edges of the screen. It leaves the top and bottom rows of the menus blank, and optionally the first and last columns as well. The change is shown right away in the settings menu.
+- **More options on one page in the settings menu.** The color palette is now only shown while one of the menu color options is selected, which leaves room for more options on screen.
+- **Quicker saving in the settings menu.** Press SELECT on any setting to jump straight to the SAVE/CANCEL/DEFAULT row.
+
+## Fixes
+
+- **No more black screen** in Ecco the Dolphin (Game Gear), Ace of Aces, Shadow Dancer, Aerial Assault and a few others.
+- **Fewer crashes and stray pixels.** Some games, among them The New Zealand Story, James Bond 007: The Duel, Double Dragon and Hurricanes, could crash or show small graphics glitches.
+- **Very small homebrew games no longer crash**, for example Pong Master.
+- **Boards with PSRAM, such as the Fruit Jam:** games without a Sega header, among them many MSX conversions, no longer return to the menu. Game Gear games that run in Master System mode, such as Castle of Illusion and Predator 2, and the Chuck Rock and Chicago Syndicate betas now have the right colours.
+- **Controller test screen** shows the controller outline and the list of controllers correctly again.
 
 # v0.29 Release notes
 

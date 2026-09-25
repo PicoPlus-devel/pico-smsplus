@@ -349,7 +349,8 @@ The settings menu is opened with SELECT from the main menu, or with SELECT + STA
 | Framerate Overlay | Show the frames per second on screen. |
 | Display Mode | HDMI or DVI output. HSTX boards only. |
 | External Audio | Route audio to the I2S/line-out output instead of HDMI. Only on boards with such an output, for example the Pimoroni Pico DV Demo Base, the Fruit Jam and the Murmulator. Selecting DVI as Display Mode enables this automatically, because DVI carries no audio. |
-| Menu Font Color / Menu Font Back Color | Menu colors (0-63). |
+| Menu Font Color / Menu Font Back Color | Menu colors (0-63). The color palette is shown while one of these two entries is selected. |
+| Overscan fix in menu | For TVs that cut off the edges of the picture. **Off** (default), **Rows** leaves the top and bottom text rows of the menus blank, **Rows & columns** also leaves the first and last columns blank. The effect is shown while the setting is changed. It applies to the menus only, not to the game picture. |
 | Fruit Jam VU Meter / Fruit Jam Volume Control | Fruit Jam only. |
 | YM2413 FM | FM sound for the Japanese Master System games that use it. Off by default. HSTX boards only. Changing it reboots the board to switch the processor clock, also when changed in-game, so change it from the main menu. See [YM2413 FM sound](#ym2413-fm-sound). |
 | Controller Test | Show a gamepad graphic that follows the controller you last pressed a button on, plus a list of connected input sources. Useful for checking wiring and button mappings. Hold SELECT + START for 2 seconds to exit. |
@@ -357,7 +358,7 @@ The settings menu is opened with SELECT from the main menu, or with SELECT + STA
 | USB drive mode | Show the SD card on a computer as a USB drive, so games can be added or removed without taking the card out. See [USB drive mode](#usb-drive-mode). Menu only, not available in-game. |
 
 > [!NOTE]
-> Changes are only applied when you select **SAVE**. **CANCEL** or Button1 discards them, **DEFAULT** restores the default values.
+> Changes are only applied when you select **SAVE**. **CANCEL** or Button1 discards them, **DEFAULT** restores the default values. Press SELECT on any setting to jump straight to the SAVE/CANCEL/DEFAULT row.
 
 ## USB drive mode
 
