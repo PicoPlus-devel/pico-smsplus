@@ -19,6 +19,19 @@
 #define IS_SMS              (cart.type == TYPE_SMS)
 #define IS_SG               (cart.type == TYPE_SG)
 
+/* Drawn by the TMS9918A renderer: every SG-1000 line, and a Master System or
+   Game Gear line while its video chip is in one of the older modes, which is
+   what R0 bit 2 selects. Conversions of MSX games use those modes throughout. */
+#define IS_TMS_MODE         (IS_SG || !(vdp.reg[0] & 0x04))
+
+/* Mode 4 with M1 and M2 set: the Master System II's 224-line mode, which the
+   Codemasters games use. With M3 set as well it would be the 240-line mode,
+   which an NTSC console cannot show, so that stays at 192 lines. */
+#define IS_224_MODE         (!IS_SG && (vdp.reg[0] & 0x06) == 0x06 && (vdp.reg[1] & 0x18) == 0x10)
+
+/* Active lines of the current mode */
+#define VDP_LINES           (IS_224_MODE ? 224 : 192)
+
 /* Macro to get offset to actual display within bitmap */
 #define BMP_X_OFFSET        ((cart.type == TYPE_GG) ? 48 : 0)
 #define BMP_Y_OFFSET        ((cart.type == TYPE_GG) ? 24 : 0)
@@ -61,11 +74,17 @@ typedef struct {
     void (*callback)(int data);
 } t_snd;
 
+/* Cartridge mappers (cart.mapper) */
+#define MAPPER_SEGA         (0)    /* bank registers at $FFFD-$FFFF, RAM control at $FFFC */
+#define MAPPER_CODIES       (1)    /* Codemasters: bank registers at $0000, $4000 and $8000 */
+#define MAPPER_NONE         (2)    /* up to 48K: $0000-$BFFF is the rom, no registers */
+
 /* Game image structure */
 typedef struct {
     uint8 *rom;
     uint8 pages;
     uint8 type;
+    uint8 mapper;       /* MAPPER_SEGA, MAPPER_CODIES or MAPPER_NONE, from the rom */
     int size;           /* ROM image size in bytes (after header strip) */
 } t_cart;
 

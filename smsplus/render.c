@@ -235,6 +235,13 @@ void render_init(void)
                 /* Return the input */
                 c = bf;
             }
+            else if(bp && b && s)
+            {
+                /* A sprite pixel hidden by a high priority tile still counts
+                   for the collision flag, so mark it: Fantastic Dizzy times its
+                   mid-screen palette change on two sprites hidden this way. */
+                c = bf | 0x40;
+            }
             else
             {
                 /* Work out priority and transparency for both pixels */
@@ -296,13 +303,39 @@ void in_ram(render_reset)(void)
 
 extern void sms_render_line(int line, const uint8_t *buffer);
 
+/* The viewport and output line offset of the current frame. They are fixed at
+   its first line, so that every frame hands sms_render_line() the same run of
+   line numbers even when a game changes mode halfway down: in line-buffer mode
+   the DVI driver takes one line per call. */
+static int frame_vstart, frame_vend, frame_shift;
+
 /* Draw a line of the display */
 void in_ram(render_line)(int line)
 {
+    if (line == 0)
+    {
+        if (IS_224_MODE)
+        {
+            /* main.cpp shows 212 lines, so a 224-line Master System picture
+               loses 6 at the top and 6 at the bottom. The Game Gear screen shows
+               the same window of the TV picture as in the 192-line mode, which
+               starts at active line 40 instead of 24. */
+            frame_shift = IS_GG ? 16 : 6;
+            frame_vstart = IS_GG ? vp_vstart + 16 : 0;
+            frame_vend = IS_GG ? vp_vend + 16 : 224;
+        }
+        else
+        {
+            frame_shift = 0;
+            frame_vstart = vp_vstart;
+            frame_vend = vp_vend;
+        }
+    }
+
     /* Ensure we're within the viewport range */
-    if ((line < vp_vstart) || (line >= vp_vend)) {
+    if ((line < frame_vstart) || (line >= frame_vend)) {
         // Hack to render emulator display center correctly vertically by drawing black lines on top and bottom.
-        sms_render_line(line, 0);
+        sms_render_line(line - frame_shift, 0);
         return;
     }
 
@@ -310,7 +343,11 @@ void in_ram(render_line)(int line)
     // linebuf = &bitmap.data[(line * bitmap.pitch)];
     linebuf = &bitmap.data[0];
 
-    if (IS_SG)
+    /* The TMS9918A modes: every SG-1000 line, and a Master System or Game Gear
+       line drawn with R0 bit 2 clear - the video chip starts in these modes and
+       the conversions of MSX games stay in them. The whole 256-byte row is
+       written; the Game Gear blit only shows its 160-pixel window of it. */
+    if (IS_TMS_MODE)
     {
         /* TMS9918A: R1 bit 6 enables the display */
         if (vdp.reg[1] & 0x40)
@@ -322,12 +359,14 @@ void in_ram(render_line)(int line)
         {
             __builtin_memset(linebuf, BACKDROP_COLOR, SMS_WIDTH);
         }
-        sms_render_line(line, linebuf);
+        sms_render_line(line - frame_shift, linebuf);
         return;
     }
 
-    /* Blank line */
-    if ((!(vdp.reg[1] & 0x40)) || (((vdp.reg[2] & 1) == 0) && (IS_SMS)))
+    /* Blank line. R2 bit 0 clear blanks a Master System line only in the
+       192-line mode: the 224-line mode takes its name table from R2 bits 2-3,
+       and Micro Machines leaves bit 0 clear. */
+    if ((!(vdp.reg[1] & 0x40)) || (((vdp.reg[2] & 1) == 0) && (IS_SMS) && !IS_224_MODE))
     {
         __builtin_memset(linebuf + (vp_hstart << 3), BACKDROP_COLOR, BMP_WIDTH);
     }
@@ -346,7 +385,7 @@ void in_ram(render_line)(int line)
         }
     }
 
-    sms_render_line(line, linebuf);
+    sms_render_line(line - frame_shift, linebuf);
     // if ( line == 191) {
     //     __builtin_memset(linebuf, 0, SMS_WIDTH);
     //     for (int i = line ; i <= 192 ; i++) {
@@ -359,7 +398,12 @@ void in_ram(render_line)(int line)
 void in_ram(render_bg_sms)(int line)
 {
     int locked = 0;
-    int v_line = (line + vdp.reg[9]) % 224;
+    /* The name table is 28 rows tall, or 32 in the 224-line mode */
+    int v_line = line + vdp.reg[9];
+    if (IS_224_MODE)
+        v_line &= 0xFF;
+    else if (v_line >= 224)
+        v_line -= 224;
     int v_row = (v_line & 7) << 3;
     int hscroll = ((vdp.reg[0] & 0x40) && (line < 0x10)) ? 0 : (0x100 - vdp.reg[8]);
     int column = vp_hstart;
@@ -451,7 +495,12 @@ void in_ram(render_bg_sms)(int line)
 /* Draw the Game Gear background */
 void render_bg_gg(int line)
 {
-    int v_line = (line + vdp.reg[9]) % 224;
+    /* The name table is 28 rows tall, or 32 in the 224-line mode */
+    int v_line = line + vdp.reg[9];
+    if (IS_224_MODE)
+        v_line &= 0xFF;
+    else if (v_line >= 224)
+        v_line -= 224;
     int v_row = (v_line & 7) << 3;
     int hscroll = (0x100 - vdp.reg[8]);
     int column;
@@ -503,6 +552,10 @@ void in_ram(render_obj)(int line)
     /* Pointer to sprite attribute table */
     uint8 *st = (uint8 *)&vdp.vram[vdp.satb];
 
+    /* Y = 208 ends the sprite list, but not in the 224-line mode, where it is
+       a line on screen */
+    int end_marker = IS_224_MODE ? -1 : 208;
+
     /* Adjust dimensions for double size sprites */
     if (vdp.reg[1] & 0x01)
     {
@@ -517,7 +570,7 @@ void in_ram(render_obj)(int line)
         int yp = st[i];
 
         /* End of sprite list marker? */
-        if (yp == 208)
+        if (yp == end_marker)
             return;
 
         /* Actual Y position is +1 */
@@ -670,14 +723,16 @@ void in_ram(palette_sync)(int index)
     // FH: Changed end
 
     bitmap.pal.dirty[index] = bitmap.pal.update = 1;
-    if (IS_GG)
+    if (IS_TMS_MODE)
+    {
+        /* Fixed TMS9918A palette. The Master System has no CRAM colours in
+           these modes either; vdp_ctrl_w() syncs the whole palette again when
+           a game switches between them and Mode 4. */
+        sms_palette_syncSG(index);
+    }
+    else if (IS_GG)
     {
         sms_palette_syncGG(index);
-    }
-    else if (IS_SG)
-    {
-        /* Fixed TMS9918A palette */
-        sms_palette_syncSG(index);
     }
     else
     {

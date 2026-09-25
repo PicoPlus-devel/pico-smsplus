@@ -4889,6 +4889,15 @@ void z80_exit(void) {
 }
 
 /****************************************************************************
+ * Take an IRQ that z80_set_irq_line() deferred to the end of an instruction
+ ****************************************************************************/
+static __attribute__((noinline)) void take_deferred_irq(void) {
+    irq_deferred = 0;
+    z80_ICount += IRQ_DEFER_CYCLES;
+    if (Z80.irq_state != CLEAR_LINE) take_interrupt();
+}
+
+/****************************************************************************
  * Execute 'cycles' T-states. Return number of T-states really executed
  ****************************************************************************/
 int in_ram(z80_execute)(int cycles) {
@@ -4896,18 +4905,16 @@ int in_ram(z80_execute)(int cycles) {
     Z80.extra_cycles = 0;
     z80_executing = 1;
 
+    /* The deferred IRQ is tested only once the time slice has run out, with
+       the work out of line. A second loop around the instruction loop does the
+       same, but makes GCC duplicate the inlined opcode dispatch, and this
+       function lives in RAM. irq_deferred is only ever set together with the
+       IRQ_DEFER_CYCLES debt, so the IRQ is taken at exactly the same point. */
     do {
-        do {
-            _PPC = _PCD;
-            _R++;
-            EXEC_INLINE(op, ROP());
-        } while (z80_ICount > 0);
-
-        if (irq_deferred) {
-            irq_deferred = 0;
-            z80_ICount += IRQ_DEFER_CYCLES;
-            if (Z80.irq_state != CLEAR_LINE) take_interrupt();
-        }
+        _PPC = _PCD;
+        _R++;
+        EXEC_INLINE(op, ROP());
+        if (z80_ICount <= 0 && irq_deferred) take_deferred_irq();
     } while (z80_ICount > 0);
 
     z80_executing = 0;

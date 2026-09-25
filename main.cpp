@@ -23,7 +23,6 @@
 #include "vumeter.h"
 #include "shared.h"
 #include "mytypes.h"
-#include "PicoPlusPsram.h"
 #include "menu_settings.h"
 #include "state.h"
 #include "soundrecorder.h"
@@ -87,6 +86,11 @@ const int8_t g_settings_visibility_sms[MOPT_COUNT] = {
     [MOPT_CONTROLLER_TEST]           = 1,
     [MOPT_RECENT_GAMES]              = 1,  // Rom browser only; menu.cpp gates in-game
     [MOPT_USB_DRIVE_MODE]            = 0,  // USB drive mode (menu.cpp force-shows this in the rom browser)
+    [MOPT_CASSETTE]                  = 0,  // TI-99/4A only
+    [MOPT_DISK]                      = 0,  // TI-99/4A only
+    [MOPT_SERIAL_KEYBOARD]           = 0,  // TI-99/4A only
+    [MOPT_SPRITE_LIMIT]              = 0,  // NES only
+    [MOPT_MENU_OVERSCAN]             = 0,  // Overscan in menu (menu.cpp force-shows this below the menu colors)
 };
 const uint8_t g_available_screen_modes_sms[] = {
 #if PICO_RP2350
@@ -148,126 +152,6 @@ WORD SMSPaletteRGB[64] = {
     0xAF, 0x5AF, 0xAAF, 0xFAF, 0xFF, 0x5FF, 0xAFF, 0xFFF};
 #endif // HSTX
 #endif
-
-#define HEADER_OFFSET 0x7FF0
-#define HEADER_SIZE 16
-
-struct SegaHeader
-{
-    // 0x7FF0
-    char signature[8];
-    // 0x7FF8
-    uint16_t reserverd;
-    // 0x7FFA
-    uint16_t checksum;
-    // 0x7FFC
-    uint8_t product_code[2];
-    // 0x7FFE
-    uint8_t ProductCodeAndVersion;
-    // 0x7FFF
-    uint8_t sizeAndRegion;
-} *header;
-bool detect_rom_type_from_memory(uintptr_t addr, int *size, bool *isGameGear)
-{
-    char *rom = (char *)addr;
-    int actualSize = 0;
-    header = (SegaHeader *)(rom + HEADER_OFFSET);
-    if (strncmp(header->signature, "TMR SEGA", 8) == 0)
-    {
-        printf("Sega header found\n");
-
-        uint8_t romsize = header->sizeAndRegion & 0b00001111;
-        uint8_t region = (header->sizeAndRegion >> 4) & 0b00001111;
-        // https://www.smspower.org/Development/ROMHeader
-        switch (romsize)
-        {
-        case 0:                 // 256KB
-            *size = 512 * 1024; // 512KB and 1MB Roms are reported in the header as 256KB.
-                                // Setting Rom size to 512KB also works for 256KB roms.
-            break;              // Setting rom size to 1MB for 256 or 512KB games does not work.
-                                // Only a small set of roms are 1MB.
-        case 1:
-            *size = 512 * 1024;
-            break;
-        case 2:
-            *size = 1024 * 1024;
-            break;
-        case 0xa:
-            *size = 8 * 1024;
-            break;
-        case 0xb:
-            *size = 16 * 1024;
-            break;
-        case 0xc:
-            *size = 32 * 1024;
-            break;
-        case 0xd:
-            *size = 48 * 1024;
-            break;
-        case 0xe:
-            *size = 64 * 1024;
-            break;
-        case 0xf:
-            *size = 128 * 1024;
-            break;
-        default:
-            printf("Unknown romsize %x\n", romsize);
-            *size = 0; // unknown size
-            break;
-        }
-        printf("Romsize %x = %d bytes\n", romsize, *size);
-#if PICO_RP2350 && PSRAM_CS_PIN
-        // If PSRAM is used, get the actual size of the allocated block to determine the actual size of the rom.
-        if (Frens::isPsramEnabled())
-        {
-            printf("PSRAM enabled, getting size of allocated block\n");
-            PicoPlusPsram &psram_ = PicoPlusPsram::getInstance();
-            printf("Size in rom: %d bytes, ", *size);
-            *size = psram_.GetSize((void *)rom);
-            printf("actual size in PSRAM: %d bytes\n", *size);
-            printf("Setting rom size to %d bytes\n", *size);
-        }
-#endif
-
-        *isGameGear = false;
-
-        printf("Region: %x - ", region);
-        switch (region)
-        {
-        case 3:
-            printf("SMS Japan\n");
-            *isGameGear = false;
-            break;
-        case 4:
-            printf("SMS Export\n");
-            *isGameGear = false;
-            break;
-        case 5:
-            printf("GG USA\n");
-            *isGameGear = true;
-            break;
-        case 6:
-            printf("GG Export\n");
-            *isGameGear = true;
-            break;
-        case 7:
-            printf("GG International\n");
-            *isGameGear = true;
-            break;
-        default:
-            printf("Unknown\n");
-            break;
-        }
-    }
-    if (*size > 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
 
 /* One-pole DC-blocker (R = 1 - 1/512, ~14 Hz cutoff). PSG-only output is
    unsigned 0..0x7FFF; PSG+FM mix is signed int16. Sign-extend raw_l/r
@@ -1242,24 +1126,13 @@ int main()
         //EXT_AUDIO_MUTE_INTERNAL_SPEAKER(settings.flags.fruitJamEnableInternalSpeaker == 0);
         if (Frens::isPsramEnabled())
         {
-            if (Frens::cstr_endswith(selectedRom, ".sg"))
+            // The rom is already in PSRAM and selectedRom holds its full path.
+            // Its size comes from the file, as without PSRAM: SG-1000 roms, many
+            // MSX conversions and homebrew games have no "TMR SEGA" header.
+            FILINFO fno;
+            if (f_stat(selectedRom, &fno) == FR_OK)
             {
-                // SG-1000 roms have no "TMR SEGA" header to take the size from.
-                // In PSRAM mode selectedRom holds the full path of the loaded rom.
-                FILINFO fno;
-                cartType = TYPE_SG;
-                if (f_stat(selectedRom, &fno) == FR_OK)
-                {
-                    fileSize = fno.fsize;
-                }
-            }
-            else
-            {
-                // Detect rom type from memory
-                // This is used to determine the rom size and type (SMS or GG)
-                bool isGameGear = false;
-                detect_rom_type_from_memory(ROM_FILE_ADDR, &fileSize, &isGameGear);
-                cartType = isGameGear ? TYPE_GG : TYPE_SMS;
+                fileSize = fno.fsize;
             }
             if (fileSize == 0)
             {
@@ -1283,15 +1156,20 @@ int main()
             }
             fileSize = f_size(&file);
             f_close(&file);
-            if (Frens::cstr_endswith(selectedRom, ".gg"))
-            {
-                cartType = TYPE_GG;
-            }
-            else if (Frens::cstr_endswith(selectedRom, ".sg"))
-            {
-                cartType = TYPE_SG;
-            }
-            printf("Now playing: %s (%d bytes)\n", selectedRom, fileSize);
+        }
+        printf("Now playing: %s (%d bytes)\n", selectedRom, fileSize);
+        // The extension gives the type, not the region code in the header.
+        // Game Gear cartridges that run in Master System mode, such as Castle of
+        // Illusion and Predator 2, are .sms files with a Game Gear region, and
+        // betas such as those of Chuck Rock and Chicago Syndicate are .gg files
+        // with a Master System one. Either way round the colours come out wrong.
+        if (Frens::cstr_endswith(selectedRom, ".gg"))
+        {
+            cartType = TYPE_GG;
+        }
+        else if (Frens::cstr_endswith(selectedRom, ".sg"))
+        {
+            cartType = TYPE_SG;
         }
         if (cartType == TYPE_GG)
         {

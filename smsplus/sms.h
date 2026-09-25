@@ -57,6 +57,8 @@ int sms_irq_callback(int param);
 
 void sms_mapper_w(int address, int data);
 
+void sms_memory_map(void);
+
 void sg_memory_map(void);
 
 void cpu_reset(void);

@@ -87,35 +87,54 @@ void sms_reset(void) {
         return;
     }
 
-    /* Load memory maps with default values */
-    cpu_readmap[0] = cart.rom + 0x0000;
-    cpu_readmap[1] = cart.rom + 0x2000;
-    cpu_readmap[2] = cart.rom + 0x4000;
-    cpu_readmap[3] = cart.rom + 0x6000;
-    cpu_readmap[4] = cart.rom + 0x0000;
-    cpu_readmap[5] = cart.rom + 0x2000;
-    cpu_readmap[6] = sms.ram;
-    cpu_readmap[7] = sms.ram;
-
-    cpu_writemap[0] = sms.dummy;
-    cpu_writemap[1] = sms.dummy;
-    cpu_writemap[2] = sms.dummy;
-    cpu_writemap[3] = sms.dummy;
-    cpu_writemap[4] = sms.dummy;
-    cpu_writemap[5] = sms.dummy;
-    cpu_writemap[6] = sms.ram;
-    cpu_writemap[7] = sms.ram;
-
     sms.fcr[0] = 0x00;
     sms.fcr[1] = 0x00;
     sms.fcr[2] = 0x01;
     sms.fcr[3] = 0x00;
+    sms_memory_map();
+}
+
+
+/* Build the Master System / Game Gear memory map from the mapper registers.
+   Called after reset and after a state load. */
+void sms_memory_map(void) {
+    int page;
+
+    for (page = 0; page < 6; page++)
+        cpu_writemap[page] = sms.dummy;
+    cpu_readmap[6] = sms.ram;
+    cpu_readmap[7] = sms.ram;
+    cpu_writemap[6] = sms.ram;
+    cpu_writemap[7] = sms.ram;
+
+    if (cart.mapper == MAPPER_NONE) {
+        /* The rom's 16K pages in order, a 16K or 32K rom repeating to fill
+           the 48K, as it does on a cartridge that leaves the upper address
+           lines unconnected */
+        for (page = 0; page < 6; page++)
+            cpu_readmap[page] = &cart.rom[(((page >> 1) % cart.pages) << 14) + ((page & 1) << 13)];
+        return;
+    }
+
+    /* The RAM control register goes first: after it, the bank registers
+       only map ROM where it left ROM, and the Codemasters slot 1 register
+       can put its cartridge RAM over $A000-$BFFF without being undone. */
+    sms_mapper_w(0, sms.fcr[0]);
+    sms_mapper_w(3, sms.fcr[3]);
+    sms_mapper_w(2, sms.fcr[2]);
+    sms_mapper_w(1, sms.fcr[1]);
 }
 
 
 /* Reset Z80 emulator */
 void cpu_reset(void) {
     z80_reset(0);
+    /* The console's BIOS leaves the stack in work RAM before it starts the
+       cartridge; without a BIOS, SP would be 0 and the first push would land on
+       the mapper registers at $FFFE-$FFFF. Ecco the Dolphin (GG) uses PUSH/POP as
+       VDP delays before it sets SP, and jumped into the wrong bank. SMS Plus GX
+       and Mesen2 use the same value. */
+    z80_set_reg(Z80_SP, 0xDFF0);
     z80_set_irq_callback(sms_irq_callback);
 }
 
@@ -272,24 +291,39 @@ void cpu_writemem16(int address, int data) {
         sg_writemem(address, data);
         return;
     }
-    cpu_writemap[(address >> 13)][(address & 0x1FFF)] = data;
-    if (address >= 0xFFFC) sms_mapper_w(address & 3, data);
+    /* Writes to ROM space are mapped to sms.dummy, a sentinel rather than a
+       real 8K page: discard them instead of indexing up to 8K past its end.
+       The Codemasters bank registers at $0000, $4000 and $8000 are in ROM space,
+       so they are looked for only there. They select the same slots as the Sega
+       registers at $FFFD-$FFFF, which Codemasters cartridges do not have. */
+    uint8 *page = cpu_writemap[address >> 13];
+    if (page != sms.dummy)
+        page[address & 0x1FFF] = data;
+    else if (cart.mapper == MAPPER_CODIES && !(address & 0x3FFF))
+        sms_mapper_w(1 + (address >> 14), data);
+    if (address >= 0xFFFC && cart.mapper == MAPPER_SEGA) sms_mapper_w(address & 3, data);
 }
 
 
-/* Write to an I/O port */
+/* Write to an I/O port. Apart from the Game Gear ports at $00-$06 and the
+   YM2413 at $F0-$F2, the console decodes only A7, A6 and A0, so every port
+   repeats through its quarter of the range: the MSX conversions reach the
+   video chip at $98/$99, where an MSX has it, instead of at $BE/$BF. */
 void cpu_writeport(int port, int data) {
     if (IS_SG) {
         sg_writeport(port, data);
         return;
     }
-    switch (port & 0xFF) {
+    port &= 0xFF;
+
+    switch (port) {
+        case 0x00:
         case 0x01: /* GG SIO */
         case 0x02:
         case 0x03:
         case 0x04:
         case 0x05:
-            break;
+            return;
 
         case 0x06: /* GG STEREO */
             if (snd.log) {
@@ -297,25 +331,7 @@ void cpu_writeport(int port, int data) {
                 snd.callback(data);
             }
             sms.psg_mask = (data & 0xFF);
-            break;
-
-        case 0x7E: /* SN76489 PSG */
-        case 0x7F:
-            if (snd.log) {
-                snd.callback(0x03);
-                snd.callback(data);
-            }
-            if (snd.enabled) SN76496Write(0, data);
-            break;
-
-        case 0xBE: /* VDP DATA */
-            vdp_data_w(data);
-            break;
-
-        case 0xBD: /* VDP CTRL */
-        case 0xBF:
-            vdp_ctrl_w(data);
-            break;
+            return;
 
         case 0xF0: /* YM2413 */
         case 0xF1:
@@ -324,27 +340,53 @@ void cpu_writeport(int port, int data) {
                 snd.callback(data);
             }
             if (snd.enabled && sms.use_fm) ym2413_write(0, port & 1, data);
-            break;
+            return;
 
         case 0xF2: /* YM2413 DETECT */
             if (sms.use_fm) sms.port_F2 = (data & 1);
-            break;
+            return;
+    }
 
-        case 0x3F: /* TERRITORY CTRL. */
+    switch (port & 0xC1) {
+        case 0x01: /* TERRITORY CTRL. ($3F) */
             sms.port_3F = ((data & 0x80) | (data & 0x20) << 1) & 0xC0;
             if (sms.country == TYPE_DOMESTIC) sms.port_3F ^= 0xC0;
+            break;
+
+        case 0x40: /* SN76489 PSG ($7E/$7F) */
+        case 0x41:
+            if (snd.log) {
+                snd.callback(0x03);
+                snd.callback(data);
+            }
+            if (snd.enabled) SN76496Write(0, data);
+            break;
+
+        case 0x80: /* VDP DATA ($BE) */
+            vdp_data_w(data);
+            break;
+
+        case 0x81: /* VDP CTRL ($BF) */
+            vdp_ctrl_w(data);
             break;
     }
 }
 
 
-/* Read from an I/O port */
+/* Read from an I/O port, decoded like cpu_writeport() */
 int cpu_readport(int port) {
     uint8 temp = 0xFF;
 
     if (IS_SG) return sg_readport(port);
+    port &= 0xFF;
 
-    switch (port & 0xFF) {
+    switch (port) {
+        case 0x00: /* INPUT #2 */
+            temp = 0xFF;
+            if (input.system & INPUT_START) temp &= ~0x80;
+            if (sms.country == TYPE_DOMESTIC) temp &= ~0x40;
+            return (temp);
+
         case 0x01: /* GG SIO */
         case 0x02:
         case 0x03:
@@ -352,26 +394,28 @@ int cpu_readport(int port) {
         case 0x05:
             return (0x00);
 
-        case 0x7E: /* V COUNTER */
+        case 0xF2: /* YM2413 DETECT */
+            if (sms.use_fm) return (sms.port_F2);
+            break;
+    }
+
+    switch (port & 0xC1) {
+        case 0x40: /* V COUNTER ($7E) */
             return (vdp_vcounter_r());
-            break;
 
-        case 0x7F: /* H COUNTER */
+        case 0x41: /* H COUNTER ($7F) */
             return (vdp_hcounter_r());
-            break;
 
-        case 0x00: /* INPUT #2 */
-            temp = 0xFF;
-            if (input.system & INPUT_START) temp &= ~0x80;
-            if (sms.country == TYPE_DOMESTIC) temp &= ~0x40;
-            return (temp);
+        case 0x80: /* VDP DATA ($BE) */
+            return (vdp_data_r());
 
-        case 0xC0: /* INPUT #0 */
-        case 0xDC:
+        case 0x81: /* VDP CTRL ($BF) */
+            return (vdp_ctrl_r());
+
+        case 0xC0: /* INPUT #0 ($DC) */
             return (read_port_dc());
 
-        case 0xC1: /* INPUT #1 */
-        case 0xDD:
+        case 0xC1: /* INPUT #1 ($DD) */
             temp = 0xFF;
             if (input.pad[1] & INPUT_LEFT) temp &= ~0x01;
             if (input.pad[1] & INPUT_RIGHT) temp &= ~0x02;
@@ -379,17 +423,6 @@ int cpu_readport(int port) {
             if (input.pad[1] & INPUT_BUTTON1) temp &= ~0x08;
             if (input.system & INPUT_SOFT_RESET) temp &= ~0x10;
             return ((temp & 0x3F) | (sms.port_3F & 0xC0));
-
-        case 0xBE: /* VDP DATA */
-            return (vdp_data_r());
-
-        case 0xBD:
-        case 0xBF: /* VDP CTRL */
-            return (vdp_ctrl_r());
-
-        case 0xF2: /* YM2413 DETECT */
-            if (sms.use_fm) return (sms.port_F2);
-            break;
     }
     return (0xFF);
 }
@@ -428,12 +461,26 @@ void sms_mapper_w(int address, int data) {
         case 2:
             cpu_readmap[2] = &cart.rom[(page << 14) + 0x0000];
             cpu_readmap[3] = &cart.rom[(page << 14) + 0x2000];
+            /* Codemasters: bit 7 maps 8 KB of cartridge RAM over $A000-$BFFF
+               (Ernie Els Golf) */
+            if (cart.mapper == MAPPER_CODIES) {
+                if (data & 0x80) {
+                    sms.save = 1;
+                    cpu_readmap[5] = sms.sram;
+                    cpu_writemap[5] = sms.sram;
+                } else {
+                    cpu_readmap[5] = &cart.rom[((sms.fcr[3] % cart.pages) << 14) + 0x2000];
+                    cpu_writemap[5] = sms.dummy;
+                }
+            }
             break;
 
         case 3:
             if (!(sms.fcr[0] & 0x08)) {
                 cpu_readmap[4] = &cart.rom[(page << 14) + 0x0000];
-                cpu_readmap[5] = &cart.rom[(page << 14) + 0x2000];
+                /* Codemasters: $A000-$BFFF stays cartridge RAM while it is mapped */
+                if (!(cart.mapper == MAPPER_CODIES && (sms.fcr[2] & 0x80)))
+                    cpu_readmap[5] = &cart.rom[(page << 14) + 0x2000];
             }
             break;
     }
