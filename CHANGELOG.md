@@ -9,6 +9,12 @@
 
 For board-by-board wiring, supported display modes and more refer to the [pico-infonesPlus documentation](https://github.com/PicoPlus-devel/pico-infonesPlus#setup). The set of supported boards and their pinouts is identical between the two projects.
 
+# v0.31 Release notes
+
+## Fixes
+
+- **More homebrew games and Game Gear betas now start**, such as Pong Master, Snail2, Bomberman Boom, Ultima III and the Batman & Robin and Lion King betas.
+
 # v0.30 Release notes
 
 ## What's new
