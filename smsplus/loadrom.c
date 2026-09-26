@@ -98,9 +98,15 @@ typedef struct
 int load_rom(uintptr_t addr, int size, int cartType)
 {
     uint8_t *start = (uint8_t *)addr;
-    /* SG-1000 images have no copier header, and sizes such as 49136 or
-       65535 bytes would wrongly trigger the strip below. */
-    if (cartType != TYPE_SG && ((size / 512) & 1))
+    /* A copier header makes the file a whole number of 1K plus 512 bytes.
+       Testing only for an odd number of 512-byte blocks also matched roms
+       that are not a whole number of blocks at all, and took 512 bytes of
+       code off them: homebrew such as Pong Master, Snail2 and Bomberman Boom,
+       and the Game Gear betas of Batman & Robin and The Lion King, which
+       then did not start. In 5083 Master System and Game Gear roms the old
+       test matched 42 files and this one the 24 that have a header.
+       SG-1000 images have no copier header, so none is looked for. */
+    if (cartType != TYPE_SG && (size % 1024) == 512)
     {
         size -= 512;
         start += 512;
@@ -137,25 +143,20 @@ int load_rom(uintptr_t addr, int size, int cartType)
             cart.mapper = MAPPER_CODIES;
     }
 
-    if (cartType == TYPE_SG)
-    {
-        /* SG ROMs can be 8 KB or not a multiple of 16 KB: round up so the
-           mapper modulo never sees zero pages and the last partial page counts. */
-        cart.pages = (size + 0x3FFF) >> 14;
-    }
-    else
-    {
-        /* Never zero: sms_mapper_w() reduces every bank number modulo this,
-           and a rom under 16K would round down to no pages at all. A rom that
-           small has one page as far as the mapper is concerned, and every bank
-           number resolves to it, which is what the hardware does when the
-           cartridge has no bank lines to drive. This is a floor, not a
-           rounding: rounding a partial page up would let the mapper select a
-           page the buffer does not hold. */
-        cart.pages = size / 0x4000;
-        if (cart.pages == 0)
-            cart.pages = 1;
-    }
+    /* sms_mapper_w() reduces every bank number modulo this, so a partial last
+       page counts as a page. Rounding down, as this did for everything but
+       SG-1000, sent that page to page 0: the Game Gear betas of The Lion King
+       and Batman & Robin are a few hundred bytes short of 512K and keep
+       graphics and code in page 31, and the Italian translation of Alex Kidd
+       in Miracle World showed nothing. The page is mapped whole, so up to 16K
+       past the end of the rom is read: in flash that is the rest of the
+       block the rom was programmed in, in PSRAM the next heap block.
+       Never zero: a rom under 16K has one page as far as the mapper is
+       concerned, and every bank number resolves to it, which is what the
+       hardware does when the cartridge has no bank lines to drive. */
+    cart.pages = (size + 0x3FFF) >> 14;
+    if (cart.pages == 0)
+        cart.pages = 1;
     return 1;
 }
 

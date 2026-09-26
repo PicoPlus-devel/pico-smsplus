@@ -108,11 +108,19 @@ void sms_memory_map(void) {
     cpu_writemap[7] = sms.ram;
 
     if (cart.mapper == MAPPER_NONE) {
-        /* The rom's 16K pages in order, a 16K or 32K rom repeating to fill
-           the 48K, as it does on a cartridge that leaves the upper address
-           lines unconnected */
+        /* The rom's 8K pages in order, a smaller rom repeating to fill the
+           48K, as it does on a cartridge that leaves the upper address lines
+           unconnected. Counting whole 16K pages, as this did, left the
+           partial last page of homebrew such as Bomberman Boom (44920 bytes)
+           and Ultima III (31233) out of reach, and both have code in it; an
+           8K rom read the 8K after it at $2000. 8K pages mirror the same way
+           for 16K, 32K and 48K roms. A partial page is mapped whole, so up to
+           8K past the end of the rom is read: in flash that is the rest of the
+           block the rom was programmed in, in PSRAM the next heap block.
+           Neither is $FF, but a game does not run past its own end. */
+        int pages8k = (cart.size + 0x1FFF) >> 13;
         for (page = 0; page < 6; page++)
-            cpu_readmap[page] = &cart.rom[(((page >> 1) % cart.pages) << 14) + ((page & 1) << 13)];
+            cpu_readmap[page] = &cart.rom[(page % pages8k) << 13];
         return;
     }
 
