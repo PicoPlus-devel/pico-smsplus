@@ -9,6 +9,20 @@
 
 For board-by-board wiring, supported display modes and more refer to the [pico-infonesPlus documentation](https://github.com/PicoPlus-devel/pico-infonesPlus#setup). The set of supported boards and their pinouts is identical between the two projects.
 
+# v0.32 Release notes
+
+After updating, all settings return to their defaults once.
+
+## What's new
+
+- **New setting: Video Clock Fix** (boards with HSTX video whose only USB port is the board's own, such as the Pimoroni Pico Plus 2, the Adafruit Metro RP2350 and the Murmulator M2). Turn it on if your TV or monitor shows small dots or lines in the picture while YM2413 FM is on. A USB controller can then no longer be used; use a NES, SNES or Wii controller instead. See [Video Clock Fix](https://github.com/PicoPlus-devel/pico-smsplus#video-clock-fix).
+
+## Fixes
+
+- **The Adafruit Fruit Jam now always uses the clean video clock**, which avoids the small dots or lines some TVs and monitors showed while YM2413 FM was on.
+- **The Controller Test screen is now closed by holding SELECT + UP** for 2 seconds. SELECT + START conflicted with some 8BitDo wireless controllers.
+- **The B button of the AliExpress SNES USB controller works without pressing Y first.**
+
 # v0.31 Release notes
 
 ## Fixes

@@ -352,13 +352,27 @@ The settings menu is opened with SELECT from the main menu, or with SELECT + STA
 | Menu Font Color / Menu Font Back Color | Menu colors (0-63). The color palette is shown while one of these two entries is selected. |
 | Overscan fix in menu | For TVs that cut off the edges of the picture. **Off** (default), **Rows** leaves the top and bottom text rows of the menus blank, **Rows & columns** also leaves the first and last columns blank. The effect is shown while the setting is changed. It applies to the menus only, not to the game picture. |
 | Fruit Jam VU Meter / Fruit Jam Volume Control | Fruit Jam only. |
+| Video Clock Fix | Turn this on if the TV or monitor shows small dots or lines in the picture while YM2413 FM is on. A USB controller can then no longer be used. HSTX boards without a second USB port only. Menu only, not available in-game. See [Video Clock Fix](#video-clock-fix). |
 | YM2413 FM | FM sound for the Japanese Master System games that use it. Off by default. HSTX boards only. Changing it reboots the board to switch the processor clock, also when changed in-game, so change it from the main menu. See [YM2413 FM sound](#ym2413-fm-sound). |
-| Controller Test | Show a gamepad graphic that follows the controller you last pressed a button on, plus a list of connected input sources. Useful for checking wiring and button mappings. Hold SELECT + START for 2 seconds to exit. |
+| Controller Test | Show a gamepad graphic that follows the controller you last pressed a button on, plus a list of connected input sources. Useful for checking wiring and button mappings. Hold SELECT + UP for 2 seconds to exit. |
 | Enter BOOTSEL Mode | Reboot into BOOTSEL so you can flash new firmware. |
 | USB drive mode | Show the SD card on a computer as a USB drive, so games can be added or removed without taking the card out. See [USB drive mode](#usb-drive-mode). Menu only, not available in-game. |
 
 > [!NOTE]
 > Changes are only applied when you select **SAVE**. **CANCEL** or Button1 discards them, **DEFAULT** restores the default values. Press SELECT on any setting to jump straight to the SAVE/CANCEL/DEFAULT row.
+
+## Video Clock Fix
+
+At 378 MHz the HDMI output clock is derived from the CPU clock, and some TVs and monitors then show small dots or short dotted lines in the picture. The emulator runs at that clock while **YM2413 FM** is on, see [YM2413 FM sound](#ym2413-fm-sound). Taking the HDMI clock from the clock source of the built-in USB port avoids this, but leaves that port without a usable clock.
+
+- Boards that connect USB controllers to a second USB port, such as the Adafruit Fruit Jam, always do this. Nothing is lost on these boards.
+- Boards with HSTX video whose only USB port is the board's own, such as a Pico 2 or Pimoroni Pico Plus 2 with the Adafruit DVI breakout, the Adafruit Metro RP2350 and the Murmulator M2, offer it as a setting: **Video Clock Fix**, in the settings menu of the main menu, just above YM2413 FM. It is off by default.
+- Boards with PicoDVI video are not affected and do not offer the setting.
+
+> [!IMPORTANT]
+> With Video Clock Fix enabled, the built-in USB port can no longer be used for a gamepad, keyboard or mouse. Use a NES, SNES or Wii Classic controller on the GPIO controller ports instead. The port still powers the board, and USB drive mode remains available.
+
+The setting can only be enabled while a NES, SNES or Wii Classic controller is detected; otherwise an error message is shown. A SNES controller cannot be detected until a button on it has been pressed. Enabling the setting shows a warning first; confirming it restarts the board. To disable it, set it to OFF in the settings menu. If no working controller is available, delete `settings_SMS.dat` from the root of the SD card on a computer: on the next start the board disables the fix and restarts once.
 
 ## USB drive mode
 

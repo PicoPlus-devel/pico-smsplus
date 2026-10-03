@@ -91,6 +91,9 @@ const int8_t g_settings_visibility_sms[MOPT_COUNT] = {
     [MOPT_SERIAL_KEYBOARD]           = 0,  // TI-99/4A only
     [MOPT_SPRITE_LIMIT]              = 0,  // NES only
     [MOPT_MENU_OVERSCAN]             = 0,  // Overscan in menu (menu.cpp force-shows this below the menu colors)
+    [MOPT_GENESIS_PAD]               = 0,  // Genesis only
+    [MOPT_NES_PALETTE]               = 0,  // NES only
+    [MOPT_HSTX_CLOCK_FIX]            = HSTX && !CFG_TUH_RPI_PIO_USB, // Video Clock Fix: FM sound runs at 378 MHz
 };
 const uint8_t g_available_screen_modes_sms[] = {
 #if PICO_RP2350
