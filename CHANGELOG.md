@@ -1,6 +1,6 @@
 # CHANGELOG
 
-> Adds support for **Codemasters games** such as Micro Machines and the Dizzy games, and gets many more games past a black screen.
+> Adds a **Video Clock Fix** setting for TVs and monitors that show small dots or lines while YM2413 FM is on, and support for the **Olimex RP2040-PICO-PC**.
 
 # General Info
 
