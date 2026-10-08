@@ -16,6 +16,7 @@ After updating, all settings return to their defaults once.
 ## What's new
 
 - **New setting: Video Clock Fix** (boards with HSTX video whose only USB port is the board's own, such as the Pimoroni Pico Plus 2, the Adafruit Metro RP2350 and the Murmulator M2). Turn it on if your TV or monitor shows small dots or lines in the picture while YM2413 FM is on. A USB controller can then no longer be used; use a NES, SNES or Wii controller instead. See [Video Clock Fix](https://github.com/PicoPlus-devel/pico-smsplus#video-clock-fix).
+- **Olimex RP2040-PICO-PC.** The emulator now runs on the [Olimex RP2040-PICO-PC](https://www.olimex.com/Products/MicroPython/PICO/RP2040-PICO-PC/) with a Raspberry Pi Pico 2: HDMI, sound through HDMI and the audio jack, a USB controller on the USB-A port and a NES or SNES controller on the UEXT connector. See [Olimex RP2040-PICO-PC](https://github.com/PicoPlus-devel/pico-infonesPlus#olimex-rp2040-pico-pc) in the pico-infonesPlus readme. Contributed by [DnCraptor](https://github.com/DnCraptor).
 
 ## Fixes
 
@@ -440,6 +441,14 @@ For more info about the Murmulator see this website: https://murmulator.ru/ and 
 | Board | Binary |
 |:--|:--|
 | Pico 2/Pico 2 w | [picosmsPlus_MurmulatorM2_arm.uf2](https://github.com/PicoPlus-devel/pico-smsplus/releases/latest/download/picosmsPlus_MurmulatorM2_arm.uf2) |
+
+### Olimex RP2040-PICO-PC
+
+| Board | Binary |
+|:--|:--|
+| Pico 2 | [picosmsPlus_OlimexPicoPC_arm.uf2](https://github.com/PicoPlus-devel/pico-smsplus/releases/latest/download/picosmsPlus_OlimexPicoPC_arm.uf2) |
+
+There is no Pico 2 W binary for this board.
 
 ### Other downloads
 
