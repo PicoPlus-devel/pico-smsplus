@@ -140,6 +140,7 @@ target_compile_definitions(${projectname} PUBLIC
     PICO_AUDIO_I2S_INTERRUPT_IS_BUTTON=${PICO_AUDIO_I2S_INTERRUPT_IS_BUTTON}
     CFG_TUH_RPI_PIO_USB=${ENABLE_PIO_USB} # Enable PIO USB support
     PIO_USB_USE_PIO=${PIO_USB_USE_PIO} # Use PIO for USB
+    NES_OVERCLOCK_FIX=1 # PIO-USB builds: HSTX from PLL_USB, no dots at 378 MHz (FM sound). Not NES-specific, as in pico-outrun
     PSRAM_CS_PIN=${PSRAM_CS_PIN} # Select the GPIO pin for PSRAM chip select
     GPIOHSTXD0=${GPIOHSTXD0} # HSTX D0 pin positive
     GPIOHSTXD1=${GPIOHSTXD1} # HSTX D1 pin positive

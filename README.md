@@ -84,6 +84,7 @@ The setting is only present on **HSTX-based RP2350 configurations**, which is wh
 | Adafruit Metro RP2350 | `picosmsPlus_AdafruitMetroRP2350_arm.uf2` |
 | Adafruit Fruit Jam | `picosmsPlus_AdafruitFruitJam_arm_piousb.uf2` |
 | Murmulator M2 | `picosmsPlus_MurmulatorM2_arm.uf2` |
+| Olimex RP2040-PICO-PC with a Pico 2 | `picosmsPlus_OlimexPicoPC_arm.uf2` |
 
 On every other configuration — all RP2040 boards, and the RP2350 boards that use the PicoDVI video driver instead of HSTX — the entry does not appear in the settings menu and those games fall back to their PSG soundtrack.
 
@@ -125,6 +126,7 @@ These boards already contain an RP2040 cpu, a separate Raspberry Pi Pico is not 
   The PSRAM on the board is used instead of flash to load the roms from SD.
 - [Waveshare RP2350-PiZero](https://www.waveshare.com/rp2350-pizero.htm)
 - [Waveshare RP2350-Zero](https://www.waveshare.com/rp2350-zero.htm) and [Waveshare RP2350-USB-A](https://www.waveshare.com/rp2350-usba.htm), each on their own PCB — see [Custom PCBs](#custom-pcbs).
+- [Olimex RP2040-PICO-PC](https://www.olimex.com/Products/MicroPython/PICO/RP2040-PICO-PC/) with a Raspberry Pi Pico 2. Sound plays through HDMI and the audio jack at the same time, and a NES or SNES controller can be connected to the UEXT connector. See [Olimex RP2040-PICO-PC](https://github.com/PicoPlus-devel/pico-infonesPlus#olimex-rp2040-pico-pc). There is no Pico 2 W binary.
 
 
 ***
@@ -352,13 +354,27 @@ The settings menu is opened with SELECT from the main menu, or with SELECT + STA
 | Menu Font Color / Menu Font Back Color | Menu colors (0-63). The color palette is shown while one of these two entries is selected. |
 | Overscan fix in menu | For TVs that cut off the edges of the picture. **Off** (default), **Rows** leaves the top and bottom text rows of the menus blank, **Rows & columns** also leaves the first and last columns blank. The effect is shown while the setting is changed. It applies to the menus only, not to the game picture. |
 | Fruit Jam VU Meter / Fruit Jam Volume Control | Fruit Jam only. |
+| Video Clock Fix | Turn this on if the TV or monitor shows small dots or lines in the picture while YM2413 FM is on. A USB controller can then no longer be used. HSTX boards without a second USB port only. Menu only, not available in-game. See [Video Clock Fix](#video-clock-fix). |
 | YM2413 FM | FM sound for the Japanese Master System games that use it. Off by default. HSTX boards only. Changing it reboots the board to switch the processor clock, also when changed in-game, so change it from the main menu. See [YM2413 FM sound](#ym2413-fm-sound). |
-| Controller Test | Show a gamepad graphic that follows the controller you last pressed a button on, plus a list of connected input sources. Useful for checking wiring and button mappings. Hold SELECT + START for 2 seconds to exit. |
+| Controller Test | Show a gamepad graphic that follows the controller you last pressed a button on, plus a list of connected input sources. Useful for checking wiring and button mappings. Hold SELECT + UP for 2 seconds to exit. |
 | Enter BOOTSEL Mode | Reboot into BOOTSEL so you can flash new firmware. |
 | USB drive mode | Show the SD card on a computer as a USB drive, so games can be added or removed without taking the card out. See [USB drive mode](#usb-drive-mode). Menu only, not available in-game. |
 
 > [!NOTE]
 > Changes are only applied when you select **SAVE**. **CANCEL** or Button1 discards them, **DEFAULT** restores the default values. Press SELECT on any setting to jump straight to the SAVE/CANCEL/DEFAULT row.
+
+## Video Clock Fix
+
+At 378 MHz the HDMI output clock is derived from the CPU clock, and some TVs and monitors then show small dots or short dotted lines in the picture. The emulator runs at that clock while **YM2413 FM** is on, see [YM2413 FM sound](#ym2413-fm-sound). Taking the HDMI clock from the clock source of the built-in USB port avoids this, but leaves that port without a usable clock.
+
+- Boards that connect USB controllers to a second USB port, such as the Adafruit Fruit Jam, always do this. Nothing is lost on these boards.
+- Boards with HSTX video whose only USB port is the board's own, such as a Pico 2 or Pimoroni Pico Plus 2 with the Adafruit DVI breakout, the Adafruit Metro RP2350, the Murmulator M2 and the Olimex RP2040-PICO-PC, offer it as a setting: **Video Clock Fix**, in the settings menu of the main menu, just above YM2413 FM. It is off by default.
+- Boards with PicoDVI video are not affected and do not offer the setting.
+
+> [!IMPORTANT]
+> With Video Clock Fix enabled, the built-in USB port can no longer be used for a gamepad, keyboard or mouse. Use a NES, SNES or Wii Classic controller on the GPIO controller ports instead; on the Olimex RP2040-PICO-PC, a NES or SNES controller on the UEXT connector. The port still powers the board, and USB drive mode remains available.
+
+The setting can only be enabled while a NES, SNES or Wii Classic controller is detected; otherwise an error message is shown. A SNES controller cannot be detected until a button on it has been pressed. Enabling the setting shows a warning first; confirming it restarts the board. To disable it, set it to OFF in the settings menu. If no working controller is available, delete `settings_SMS.dat` from the root of the SD card on a computer: on the next start the board disables the fix and restarts once.
 
 ## USB drive mode
 
@@ -503,6 +519,7 @@ This emulator is other people's work brought together on a Pico.
 - The **PicoNES Mini** and **PicoNES Micro** PCBs, and the 3D-printed cases for all of them, were designed by **Gavin Knight** ([DynaMight1124](https://github.com/DynaMight1124)).
 - The [metadata pack](#using-metadata) — the box art, game info and themed borders/bezels on the SD card — was put together by **Gavin Knight** ([DynaMight1124](https://github.com/DynaMight1124)).
 - **Murmulator M1 and M2** support was contributed by [@javavi](https://github.com/javavi).
+- **Olimex RP2040-PICO-PC** support, including sound through its audio jack, was contributed by [DnCraptor](https://github.com/DnCraptor).
 - Thanks to [@Layer812](https://github.com/Layer812) for testing the I2S audio output and providing feedback.
 
 **This project**
