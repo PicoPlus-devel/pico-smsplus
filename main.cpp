@@ -93,7 +93,6 @@ const int8_t g_settings_visibility_sms[MOPT_COUNT] = {
     [MOPT_MENU_OVERSCAN]             = 0,  // Overscan in menu (menu.cpp force-shows this below the menu colors)
     [MOPT_GENESIS_PAD]               = 0,  // Genesis only
     [MOPT_NES_PALETTE]               = 0,  // NES only
-    [MOPT_HSTX_CLOCK_FIX]            = HSTX && !CFG_TUH_RPI_PIO_USB, // Video Clock Fix: FM sound runs at 378 MHz
 };
 const uint8_t g_available_screen_modes_sms[] = {
 #if PICO_RP2350
@@ -1039,7 +1038,8 @@ void in_ram(process)(void)
     {
         processinput(&pdwPad1, &pdwPad2, &pdwSystem, false, nullptr);
 #if PICO_RP2350
-        sms.use_fm = settings.flags.useFM;
+        // FM is offered on HSTX boards only (MOPT_FM_AUDIO); ignore a setting saved on another board.
+        sms.use_fm = HSTX && settings.flags.useFM;
 #endif
         sms_frame(0);
 #if EXT_AUDIO_IS_ENABLED
@@ -1101,6 +1101,21 @@ int main()
     //     - When using framebuffer, AUDIOBUFFERSIZE must be increased to 1024
     //     - Top and bottom margins are reset to zero
     isFatalError = !Frens::initAll(selectedRom, CPUFreqKHz, MARGINTOP, MARGINBOTTOM, AUDIOBUFFERSIZE, false, true);
+#if HSTX
+    // YM2413 FM needs the max clock, which the menu switches to by writing FlashParams.
+    // The settings can still say FM is on while the board runs at the normal clock: after
+    // an update that moved FlashParams (they sit right after the binary), or with an SD
+    // card from another board. pico_shared's reconcileSettingsWithFlashParams() does this
+    // for Overclock only, so do the same for FM: turn it off, and leave switching it on
+    // again to the menu.
+    if (!isFatalError && settings.flags.useFM && CPUFreqKHz != Frens::getMaxFreqKHz())
+    {
+        printf("YM2413 FM is on in the settings but the board runs at %lu kHz, turning it off.\n",
+               (unsigned long)CPUFreqKHz);
+        settings.flags.useFM = 0;
+        FrensSettings::savesettings();
+    }
+#endif
     // Must go through applyScreenMode on both display paths: it is the only
     // place that pushes scanline *type* and aspect ratio to the HSTX driver as
     // well as the on/off bit. Calling hstx_setScanLines() directly here left

@@ -1,6 +1,6 @@
 # CHANGELOG
 
-> **v0.32.2** finds USB controllers at every start on the Adafruit Fruit Jam and other boards with PIO-USB.
+> **v0.33** removes the small dots or lines some TVs and monitors showed in the picture while YM2413 FM was on, while the built-in USB port keeps working, and finds USB controllers at every start on the Adafruit Fruit Jam and other boards with PIO-USB.
 
 # General Info
 
@@ -9,10 +9,18 @@
 
 For board-by-board wiring, supported display modes and more refer to the [pico-infonesPlus documentation](https://github.com/PicoPlus-devel/pico-infonesPlus#setup). The set of supported boards and their pinouts is identical between the two projects.
 
-# v0.32.2 Release notes
+# v0.33 Release notes
+
+## Changes
+
+- **The Video Clock Fix setting has been removed.** It is no longer needed, see below. On a board where it was turned on, a USB controller on the built-in USB port works again.
+- **YM2413 FM** now raises the CPU clock to 384 MHz instead of 378 MHz.
 
 ## Fixes
 
+- **No more dots or lines in the picture while YM2413 FM is on.** On boards with HSTX video, some TVs and monitors showed small dots or short dotted lines, for example on dark screens. The picture is now clean, and the built-in USB port can still be used for controllers and USB drive mode. Thanks to @szuping for the hint that led to this fix.
+- **The YM2413 FM setting always matches the speed the board runs at.** After an update it could show ON while the board ran at the normal speed. It is then turned off; turn it on again in the settings menu.
+- **YM2413 FM stays off on boards with PicoDVI video.** The setting is not offered on these boards, but a setting saved on another board with the same SD card could still turn it on.
 - **USB controllers on the Adafruit Fruit Jam and other boards with PIO-USB are now found at every start.** On boards with an older RP2350 chip they were often not detected.
 
 # v0.32.1 Release notes
@@ -30,7 +38,7 @@ After updating, all settings return to their defaults once.
 
 ## What's new
 
-- **New setting: Video Clock Fix** (boards with HSTX video whose only USB port is the board's own, such as the Pimoroni Pico Plus 2, the Adafruit Metro RP2350 and the Murmulator M2). Turn it on if your TV or monitor shows small dots or lines in the picture while YM2413 FM is on. A USB controller can then no longer be used; use a NES, SNES or Wii controller instead. See [Video Clock Fix](https://github.com/PicoPlus-devel/pico-smsplus#video-clock-fix).
+- ~~**New setting: Video Clock Fix** (boards with HSTX video whose only USB port is the board's own, such as the Pimoroni Pico Plus 2, the Adafruit Metro RP2350 and the Murmulator M2). Turn it on if your TV or monitor shows small dots or lines in the picture while YM2413 FM is on. A USB controller can then no longer be used; use a NES, SNES or Wii controller instead.~~ Removed in v0.33.
 - **Olimex RP2040-PICO-PC.** The emulator now runs on the [Olimex RP2040-PICO-PC](https://www.olimex.com/Products/MicroPython/PICO/RP2040-PICO-PC/) with a Raspberry Pi Pico 2: HDMI, sound through HDMI and the audio jack, a USB controller on the USB-A port and a NES or SNES controller on the UEXT connector. See [Olimex RP2040-PICO-PC](https://github.com/PicoPlus-devel/pico-infonesPlus#olimex-rp2040-pico-pc) in the pico-infonesPlus readme. Contributed by [DnCraptor](https://github.com/DnCraptor).
 
 ## Fixes
