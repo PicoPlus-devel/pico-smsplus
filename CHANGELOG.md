@@ -15,6 +15,7 @@ For board-by-board wiring, supported display modes and more refer to the [pico-i
 
 - **The Video Clock Fix setting has been removed.** It is no longer needed, see below. On a board where it was turned on, a USB controller on the built-in USB port works again.
 - **YM2413 FM** now raises the CPU clock to 384 MHz instead of 378 MHz.
+- **USB keyboard in the menus.** Enter selects and Esc goes back.
 
 ## Fixes
 
