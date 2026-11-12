@@ -85,6 +85,8 @@ The setting is only present on **HSTX-based RP2350 configurations**, which is wh
 | Adafruit Fruit Jam | `picosmsPlus_AdafruitFruitJam_arm_piousb.uf2` |
 | Murmulator M2 | `picosmsPlus_MurmulatorM2_arm.uf2` |
 | Olimex RP2040-PICO-PC with a Pico 2 | `picosmsPlus_OlimexPicoPC_arm.uf2` |
+| Pico Computer 3 | `picosmsPlus_PicoComputer3_arm.uf2` |
+| PCB for the Waveshare RP2350-PiZero | `picosmsPlus_WaveShareRP2350PiZeroLiuPCB_arm_piousb.uf2` |
 
 On every other configuration — all RP2040 boards, and the RP2350 boards that use the PicoDVI video driver instead of HSTX — the entry does not appear in the settings menu and those games fall back to their PSG soundtrack.
 
@@ -127,6 +129,8 @@ These boards already contain an RP2040 cpu, a separate Raspberry Pi Pico is not 
 - [Waveshare RP2350-PiZero](https://www.waveshare.com/rp2350-pizero.htm)
 - [Waveshare RP2350-Zero](https://www.waveshare.com/rp2350-zero.htm) and [Waveshare RP2350-USB-A](https://www.waveshare.com/rp2350-usba.htm), each on their own PCB — see [Custom PCBs](#custom-pcbs).
 - [Olimex RP2040-PICO-PC](https://www.olimex.com/Products/MicroPython/PICO/RP2040-PICO-PC/) with a Raspberry Pi Pico 2. Sound plays through HDMI and the audio jack at the same time, and a NES or SNES controller can be connected to the UEXT connector. See [Olimex RP2040-PICO-PC](https://github.com/PicoPlus-devel/pico-infonesPlus#olimex-rp2040-pico-pc). There is no Pico 2 W binary.
+- [Pico Computer 3](https://github.com/UKTailwind/Pico-Computer-3). The PSRAM on the board is used instead of flash to load the roms from SD. Up to two NES or SNES controllers and a Wii Classic controller can be connected to the I/O header. See [Pico Computer 3](https://github.com/PicoPlus-devel/pico-infonesPlus#pico-computer-3). Support for this board is new, and its pin assignment may still change.
+- [PCB for the Waveshare RP2350-PiZero](https://github.com/PicoPlus-devel/pico-infonesPlus#pcb-with-waveshare-rp2350-pizero), designed by Liu Szuping ([szuping](https://github.com/szuping)), with HDMI, an audio jack, NES and SNES controller ports and a socket for an ESP32 module running [BlueRetro](https://github.com/darthcloud/blueretro) for Bluetooth controllers. Sound plays through HDMI, or through the audio jack with *External Audio* in the settings menu. PSRAM is optional and has to be soldered onto the RP2350-PiZero. The PCB design is not yet available.
 
 
 ***
@@ -144,6 +148,8 @@ Four community PCB designs turn a supported board and its breakouts into a small
 
 > [!NOTE]
 > The PicoNES v2.6 and v2.8 are shown with a Pimoroni Pico Plus 2. A Raspberry Pi Pico, Pico W, Pico 2 or Pico 2 W can also be fitted.
+
+A fifth design, the [PCB for the Waveshare RP2350-PiZero](https://github.com/PicoPlus-devel/pico-infonesPlus#pcb-with-waveshare-rp2350-pizero) by Liu Szuping, is supported by the emulator, but the design is not yet available.
 
 The PicoNES and PicoNES Mini both have two controller ports, so [two player Master System games](#about-two-player-games) work on them; the PicoNES Micro is a single-controller design.
 
@@ -309,7 +315,7 @@ The settings menu is opened with SELECT from the main menu, or with SELECT + STA
 | Recently played | Open the list of the [last 20 games you started](#recently-played-games) and restart one of them. Menu only, not available in-game. |
 | Quit game | Leave the game and return to the SD card menu. Battery-backed save RAM is written to the SD card here. In-game only. |
 | Reset game | Reset the running game. In-game only. |
-| Return to emulator selection | Go back to the emulator picker. Only present when running under [pico-bootLoader](https://github.com/PicoPlus-devel/pico-bootLoader). |
+| Return to boot loader | Go back to the emulator picker. Only present when running under [pico-bootLoader](https://github.com/PicoPlus-devel/pico-bootLoader). |
 | Save/Load State | Manage save states. In-game only. |
 | Screen Mode | Cycle the screen modes, with or without scanlines. RP2040 boards also offer the 8:7 pixel aspect ratio modes; RP2350 boards only the 1:1 modes. |
 | Scanline Type | Simple or LCD style scanlines. HSTX boards only. |
@@ -471,6 +477,8 @@ This emulator is other people's work brought together on a Pico.
 - The [metadata pack](#using-metadata) — the box art, game info and themed borders/bezels on the SD card — was put together by **Gavin Knight** ([DynaMight1124](https://github.com/DynaMight1124)).
 - **Murmulator M1 and M2** support was contributed by [@javavi](https://github.com/javavi).
 - **Olimex RP2040-PICO-PC** support, including sound through its audio jack, was contributed by [DnCraptor](https://github.com/DnCraptor).
+- **Pico Computer 3** support was contributed by [@javavi](https://github.com/javavi).
+- The **PCB for the Waveshare RP2350-PiZero** was designed by Liu Szuping ([szuping](https://github.com/szuping)).
 - Thanks to [@Layer812](https://github.com/Layer812) for testing the I2S audio output and providing feedback.
 
 **This project**
