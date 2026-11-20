@@ -9,7 +9,9 @@
 
 For board-by-board wiring, supported display modes and more refer to the [pico-infonesPlus documentation](https://github.com/PicoPlus-devel/pico-infonesPlus#setup). The set of supported boards and their pinouts is identical between the two projects.
 
-# Next release
+# v0.34_bl
+
+This version is built for [pico-bootLoader](https://github.com/PicoPlus-devel/pico-bootLoader) only, and is included in its SD-card archive. It has no release of its own: without pico-bootLoader, keep using v0.34.
 
 ## What's new
 
