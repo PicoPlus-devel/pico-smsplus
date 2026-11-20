@@ -11,6 +11,10 @@ For board-by-board wiring, supported display modes and more refer to the [pico-i
 
 # Next release
 
+## What's new
+
+- **Attract mode.** pico-bootLoader's new attract mode can now start the emulator with a random game from `/roms/SMS`. Press any button to play that game yourself.
+
 ## Changes
 
 - Built with Pico SDK 2.3.1. This leaves a little more memory free, about 0.4 KB.
